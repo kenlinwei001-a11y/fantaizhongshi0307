@@ -26,6 +26,7 @@ import { ResultExplorer } from './pages/ResultExplorer';
 import { ProjectManager } from './pages/ProjectManager';
 import SimulationStudio from './pages/SimulationStudio';
 import { CreateSimulationCase } from './pages/CreateSimulationCase';
+import { SimulationRunDetail } from './pages/SimulationRunDetail';
 
 function PlaceholderPage({ title }: { title: string }) {
   return (
@@ -51,6 +52,7 @@ export default function App() {
           <Route path="/simulation-studio" element={<ProjectManager />} />
           <Route path="/simulation-studio/create" element={<CreateSimulationCase />} />
           <Route path="/simulation-studio/editor" element={<SimulationStudio />} />
+          <Route path="/simulation/:id/status" element={<SimulationRunDetail />} />
           
           <Route path="/results" element={<ResultExplorer />} />
           <Route path="/decision" element={<PlaceholderPage title="决策中心" />} />

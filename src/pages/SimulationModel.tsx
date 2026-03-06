@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Box, 
   Plus, 
@@ -87,6 +88,7 @@ const TypeBadge = ({ type }: { type: string }) => {
 };
 
 export function SimulationModel() {
+  const navigate = useNavigate();
   return (
     <div className="h-full flex flex-col bg-zinc-950 text-white">
       <div className="h-14 border-b border-white/10 flex items-center justify-between px-6 bg-zinc-900">
@@ -103,7 +105,11 @@ export function SimulationModel() {
       <div className="flex-1 p-6 overflow-y-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {mockModels.map((model) => (
-            <div key={model.id} className="bg-zinc-900 border border-white/10 rounded-xl p-5 hover:border-orange-500/50 transition-colors group relative">
+            <div 
+              key={model.id} 
+              onClick={() => navigate(`/simulation/${model.id}/status`)}
+              className="bg-zinc-900 border border-white/10 rounded-xl p-5 hover:border-orange-500/50 transition-colors group relative cursor-pointer"
+            >
               <div className="absolute top-5 right-5">
                 <button className="text-zinc-500 hover:text-white transition-colors">
                   <MoreVertical className="w-4 h-4" />

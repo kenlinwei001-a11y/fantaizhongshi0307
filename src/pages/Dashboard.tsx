@@ -1,4 +1,4 @@
-import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Activity, 
   Cpu, 
@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 
 export function Dashboard() {
+  const navigate = useNavigate();
   return (
     <div className="p-8 space-y-8 bg-zinc-950 min-h-screen text-white overflow-y-auto">
       <div>
@@ -69,12 +70,16 @@ export function Dashboard() {
           <h2 className="text-lg font-semibold mb-4">最近仿真任务</h2>
           <div className="space-y-4">
             {[
-              { name: '高炉优化_V3', status: 'running', progress: 45, time: '2分钟前' },
-              { name: '闪速炉流场分析_Case01', status: 'completed', progress: 100, time: '1小时前' },
-              { name: '转炉传热模拟_Test', status: 'completed', progress: 100, time: '3小时前' },
-              { name: '喷嘴磨损预测_M12', status: 'failed', progress: 12, time: '5小时前' },
+              { id: 'sim-001', name: '高炉优化_V3', status: 'running', progress: 45, time: '2分钟前' },
+              { id: 'sim-002', name: '闪速炉流场分析_Case01', status: 'completed', progress: 100, time: '1小时前' },
+              { id: 'sim-003', name: '转炉传热模拟_Test', status: 'completed', progress: 100, time: '3小时前' },
+              { id: 'sim-004', name: '喷嘴磨损预测_M12', status: 'failed', progress: 12, time: '5小时前' },
             ].map((sim, i) => (
-              <div key={i} className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+              <div 
+                key={i} 
+                onClick={() => navigate(`/simulation/${sim.id}/status`)}
+                className="flex items-center justify-between p-3 bg-white/5 rounded-lg hover:bg-white/10 cursor-pointer transition-colors"
+              >
                 <div className="flex items-center gap-3">
                   <div className={cn(
                     "w-2 h-2 rounded-full",

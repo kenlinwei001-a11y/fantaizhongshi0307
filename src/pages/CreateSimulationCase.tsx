@@ -16,6 +16,8 @@ import {
   Cpu,
   Users,
   Lock,
+  ClipboardCheck,
+  FileCheck,
   Box
 } from 'lucide-react';
 import { cn } from '../lib/utils';
@@ -33,9 +35,17 @@ interface SimulationConfig {
   equipment: { type: string; height: number; diameter: number };
   boundary_conditions: { temperature: number; pressure: number; flow_rate: number };
   solver_parameters: { mesh_size: number; time_step: number; tolerance: number };
+  physical_verification: {
+    verification_id: string;
+    type: string;
+    data_source: string;
+    metrics: { temperature: number; composition: string; flow: number };
+    timestamp: string;
+  }[];
   advanced_settings: { parallel_nodes: number; output_frequency: number };
   permissions: { read: string[]; write: string[] };
   version: string;
+  status: 'saved' | 'running' | 'completed' | 'verified';
 }
 
 const steps = [
@@ -46,8 +56,9 @@ const steps = [
   { id: 4, key: 'equipment', title: '设备配置', icon: Settings },
   { id: 5, key: 'boundary', title: '边界条件', icon: AlertCircle },
   { id: 6, key: 'solver', title: '仿真参数', icon: Cpu },
-  { id: 7, key: 'advanced', title: '高级设置', icon: Settings },
-  { id: 8, key: 'permission', title: '权限与版本', icon: Lock },
+  { id: 7, key: 'verification', title: '物理验证', icon: ClipboardCheck },
+  { id: 8, key: 'advanced', title: '高级设置', icon: Settings },
+  { id: 9, key: 'permission', title: '权限与版本', icon: Lock },
 ];
 
 const mockMaterials = [
@@ -78,9 +89,11 @@ export function CreateSimulationCase() {
     equipment: { type: '', height: 0, diameter: 0 },
     boundary_conditions: { temperature: 1200, pressure: 101.3, flow_rate: 50 },
     solver_parameters: { mesh_size: 0.01, time_step: 0.001, tolerance: 1e-6 },
+    physical_verification: [],
     advanced_settings: { parallel_nodes: 4, output_frequency: 100 },
     permissions: { read: ['public'], write: ['owner'] },
-    version: '1.0.0'
+    version: '1.0.0',
+    status: 'saved'
   });
 
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
@@ -433,7 +446,98 @@ export function CreateSimulationCase() {
             </div>
           </div>
         );
-      case 7: // Advanced
+      case 7: // Verification
+        return (
+          <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-medium">物理验证数据关联</h3>
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => {
+                    const newVerification = {
+                      verification_id: `VER-${Math.floor(Math.random() * 1000)}`,
+                      type: '实验数据',
+                      data_source: 'Exp_Data_2024.csv',
+                      metrics: { temperature: 1450, composition: 'Fe: 95%, C: 4%', flow: 12.5 },
+                      timestamp: new Date().toLocaleDateString()
+                    };
+                    handleInputChange('physical_verification', '', [...formData.physical_verification, newVerification]);
+                  }}
+                  className="text-sm bg-zinc-800 hover:bg-zinc-700 text-white px-3 py-1.5 rounded-lg border border-white/10 transition-colors flex items-center gap-2"
+                >
+                  <FileCheck className="w-4 h-4" />
+                  上传实验数据
+                </button>
+                <button className="text-sm text-emerald-500 hover:text-emerald-400 flex items-center gap-1 px-3 py-1.5 border border-emerald-500/20 rounded-lg bg-emerald-500/10 transition-colors">
+                  <Database className="w-4 h-4" />
+                  从数据库选择
+                </button>
+              </div>
+            </div>
+
+            {formData.physical_verification.length === 0 ? (
+              <div className="border border-dashed border-white/10 rounded-xl p-8 flex flex-col items-center justify-center text-zinc-500 bg-white/5">
+                <ClipboardCheck className="w-12 h-12 mb-3 opacity-20" />
+                <p>暂无关联的物理验证数据</p>
+                <p className="text-xs mt-1 opacity-50">上传实验数据或关联物理模拟结果以进行验证比对</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {formData.physical_verification.map((ver, idx) => (
+                  <div key={idx} className="bg-zinc-900 border border-white/10 rounded-xl p-4 flex items-center justify-between group hover:border-emerald-500/30 transition-colors">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+                        <FileCheck className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <div className="font-medium text-white flex items-center gap-2">
+                          {ver.verification_id}
+                          <span className="text-xs px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 border border-zinc-700">{ver.type}</span>
+                        </div>
+                        <div className="text-xs text-zinc-500 mt-1 flex items-center gap-3">
+                          <span>来源: {ver.data_source}</span>
+                          <span>|</span>
+                          <span>时间: {ver.timestamp}</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-6 text-sm text-zinc-400">
+                      <div className="text-right">
+                        <div className="text-xs text-zinc-500">温度</div>
+                        <div className="font-mono text-white">{ver.metrics.temperature} K</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-xs text-zinc-500">流量</div>
+                        <div className="font-mono text-white">{ver.metrics.flow} kg/s</div>
+                      </div>
+                      <button 
+                        onClick={() => {
+                          const newVer = formData.physical_verification.filter((_, i) => i !== idx);
+                          handleInputChange('physical_verification', '', newVer);
+                        }}
+                        className="p-2 hover:bg-white/10 rounded-lg text-zinc-500 hover:text-red-400 transition-colors"
+                      >
+                        <AlertCircle className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            <div className="bg-blue-500/5 rounded-xl p-4 border border-blue-500/10 mt-4">
+              <h3 className="text-sm font-medium text-blue-400 mb-2 flex items-center gap-2">
+                <HelpCircle className="w-4 h-4" />
+                验证说明
+              </h3>
+              <p className="text-xs text-blue-300/80 leading-relaxed">
+                关联物理验证数据后，系统将在仿真完成后自动生成误差分析报告。支持上传 CSV/Excel 格式的实验数据，或直接关联物理模拟实验库中的项目。
+              </p>
+            </div>
+          </div>
+        );
+      case 8: // Advanced
         return (
           <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -463,7 +567,7 @@ export function CreateSimulationCase() {
             </div>
           </div>
         );
-      case 8: // Permission
+      case 9: // Permission
         return (
           <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
             <div className="space-y-2">
@@ -618,6 +722,37 @@ export function CreateSimulationCase() {
                 </div>
               )}
             </div>
+
+            {/* Verification Preview */}
+            {currentStep === 7 && formData.physical_verification.length > 0 && (
+              <div>
+                <h3 className="text-sm font-medium text-zinc-300 mb-3 flex items-center gap-2">
+                  <ClipboardCheck className="w-4 h-4 text-emerald-500" />
+                  验证数据预览
+                </h3>
+                <div className="space-y-2">
+                  <div className="p-3 rounded bg-zinc-800/50 border border-white/5">
+                    <div className="flex justify-between text-xs mb-1">
+                      <span className="text-zinc-500">关键指标匹配度</span>
+                      <span className="text-emerald-400">98.5%</span>
+                    </div>
+                    <div className="w-full bg-zinc-700 h-1.5 rounded-full overflow-hidden">
+                      <div className="bg-emerald-500 h-full rounded-full" style={{ width: '98.5%' }} />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="p-2 bg-zinc-800 rounded border border-white/5">
+                      <div className="text-zinc-500">实验温度</div>
+                      <div className="font-mono text-white">1450 K</div>
+                    </div>
+                    <div className="p-2 bg-zinc-800 rounded border border-white/5">
+                      <div className="text-zinc-500">模拟设定</div>
+                      <div className="font-mono text-zinc-300">1450 K</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* History */}
             <div>
