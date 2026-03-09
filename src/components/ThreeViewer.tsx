@@ -141,9 +141,160 @@ function Converter({ mode }: { mode: 'geometry' | 'mesh' | 'result' }) {
   );
 }
 
+function HotStove({ mode }: { mode: 'geometry' | 'mesh' | 'result' }) {
+  const groupRef = useRef<THREE.Group>(null!);
+  useFrame((state, delta) => {
+    if (mode === 'result') groupRef.current.rotation.y += delta * 0.1;
+  });
+  const materialProps = {
+    color: mode === 'result' ? '#ef4444' : (mode === 'mesh' ? '#4ade80' : '#60a5fa'),
+    wireframe: mode === 'mesh',
+    transparent: mode === 'mesh' || mode === 'result',
+    opacity: mode === 'mesh' ? 0.5 : (mode === 'result' ? 0.8 : 1),
+  };
+  return (
+    <group ref={groupRef} position={[0, -1.5, 0]}>
+      {/* Main Body */}
+      <mesh position={[0, 1.5, 0]}>
+        <cylinderGeometry args={[1.2, 1.2, 3, 32]} />
+        <meshStandardMaterial {...materialProps} color={mode === 'result' ? '#f97316' : materialProps.color} />
+      </mesh>
+      {/* Dome */}
+      <mesh position={[0, 3, 0]}>
+        <sphereGeometry args={[1.2, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2]} />
+        <meshStandardMaterial {...materialProps} color={mode === 'result' ? '#ef4444' : materialProps.color} />
+      </mesh>
+      {/* Pipe */}
+      <mesh position={[1.2, 1.5, 0]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[0.4, 0.4, 1, 16]} />
+        <meshStandardMaterial {...materialProps} color={mode === 'result' ? '#eab308' : materialProps.color} />
+      </mesh>
+    </group>
+  );
+}
+
+function DustFilter({ mode }: { mode: 'geometry' | 'mesh' | 'result' }) {
+  const groupRef = useRef<THREE.Group>(null!);
+  useFrame((state, delta) => {
+    if (mode === 'result') groupRef.current.rotation.y += delta * 0.1;
+  });
+  const materialProps = {
+    color: mode === 'result' ? '#a8a29e' : (mode === 'mesh' ? '#4ade80' : '#60a5fa'),
+    wireframe: mode === 'mesh',
+    transparent: mode === 'mesh' || mode === 'result',
+    opacity: mode === 'mesh' ? 0.5 : (mode === 'result' ? 0.8 : 1),
+  };
+  return (
+    <group ref={groupRef} position={[0, -1, 0]}>
+      {/* Main Box */}
+      <mesh position={[0, 1.5, 0]}>
+        <boxGeometry args={[2.5, 2, 1.5]} />
+        <meshStandardMaterial {...materialProps} color={mode === 'result' ? '#78716c' : materialProps.color} />
+      </mesh>
+      {/* Hoppers */}
+      <mesh position={[-0.6, 0.25, 0]} rotation={[Math.PI, 0, 0]}>
+        <coneGeometry args={[0.6, 1, 4]} />
+        <meshStandardMaterial {...materialProps} color={mode === 'result' ? '#57534e' : materialProps.color} />
+      </mesh>
+      <mesh position={[0.6, 0.25, 0]} rotation={[Math.PI, 0, 0]}>
+        <coneGeometry args={[0.6, 1, 4]} />
+        <meshStandardMaterial {...materialProps} color={mode === 'result' ? '#57534e' : materialProps.color} />
+      </mesh>
+      {/* Inlet Pipe */}
+      <mesh position={[-1.5, 1.5, 0]} rotation={[0, 0, Math.PI / 2]}>
+        <cylinderGeometry args={[0.3, 0.3, 1, 16]} />
+        <meshStandardMaterial {...materialProps} color={mode === 'result' ? '#a8a29e' : materialProps.color} />
+      </mesh>
+    </group>
+  );
+}
+
+function OxygenLance({ mode }: { mode: 'geometry' | 'mesh' | 'result' }) {
+  const groupRef = useRef<THREE.Group>(null!);
+  useFrame((state, delta) => {
+    if (mode === 'result') {
+      groupRef.current.rotation.y += delta * 0.5;
+      groupRef.current.position.y = Math.sin(state.clock.elapsedTime * 5) * 0.1;
+    }
+  });
+  const materialProps = {
+    color: mode === 'result' ? '#94a3b8' : (mode === 'mesh' ? '#4ade80' : '#60a5fa'),
+    wireframe: mode === 'mesh',
+    transparent: mode === 'mesh' || mode === 'result',
+    opacity: mode === 'mesh' ? 0.5 : (mode === 'result' ? 0.9 : 1),
+  };
+  return (
+    <group ref={groupRef} position={[0, 0, 0]}>
+      {/* Main Tube */}
+      <mesh position={[0, 1.5, 0]}>
+        <cylinderGeometry args={[0.2, 0.2, 4, 32]} />
+        <meshStandardMaterial {...materialProps} metalness={0.8} roughness={0.2} />
+      </mesh>
+      {/* Nozzle Tip */}
+      <mesh position={[0, -0.6, 0]}>
+        <cylinderGeometry args={[0.2, 0.25, 0.4, 32]} />
+        <meshStandardMaterial {...materialProps} color={mode === 'result' ? '#ef4444' : materialProps.color} metalness={0.5} />
+      </mesh>
+      {/* Oxygen Jets (only in result mode) */}
+      {mode === 'result' && (
+        <group position={[0, -0.8, 0]}>
+          {[0, 1, 2, 3].map((i) => (
+            <mesh key={i} position={[Math.cos(i * Math.PI / 2) * 0.3, -0.5, Math.sin(i * Math.PI / 2) * 0.3]} rotation={[Math.PI / 8 * Math.cos(i * Math.PI / 2), 0, Math.PI / 8 * Math.sin(i * Math.PI / 2)]}>
+              <coneGeometry args={[0.15, 1.5, 16]} />
+              <meshBasicMaterial color="#60a5fa" transparent opacity={0.6} />
+            </mesh>
+          ))}
+        </group>
+      )}
+    </group>
+  );
+}
+
+function BottomBlowing({ mode }: { mode: 'geometry' | 'mesh' | 'result' }) {
+  const groupRef = useRef<THREE.Group>(null!);
+  useFrame((state, delta) => {
+    if (mode === 'result') groupRef.current.rotation.y += delta * 0.2;
+  });
+  const materialProps = {
+    color: mode === 'result' ? '#b91c1c' : (mode === 'mesh' ? '#4ade80' : '#60a5fa'),
+    wireframe: mode === 'mesh',
+    transparent: mode === 'mesh' || mode === 'result',
+    opacity: mode === 'mesh' ? 0.5 : (mode === 'result' ? 0.8 : 1),
+  };
+  return (
+    <group ref={groupRef} position={[0, -1, 0]}>
+      {/* Converter Bottom */}
+      <mesh position={[0, 0, 0]}>
+        <cylinderGeometry args={[2, 1.5, 1, 32]} />
+        <meshStandardMaterial {...materialProps} />
+      </mesh>
+      {/* Porous Plugs & Bubbles */}
+      {[0, 1, 2, 3, 4, 5].map((i) => {
+        const angle = (i * Math.PI * 2) / 6;
+        const x = Math.cos(angle) * 0.8;
+        const z = Math.sin(angle) * 0.8;
+        return (
+          <group key={i} position={[x, 0.5, z]}>
+            <mesh>
+              <cylinderGeometry args={[0.1, 0.1, 0.1, 16]} />
+              <meshStandardMaterial color="#475569" />
+            </mesh>
+            {mode === 'result' && (
+              <mesh position={[0, 1, 0]}>
+                <cylinderGeometry args={[0.05, 0.2, 2, 16]} />
+                <meshBasicMaterial color="#93c5fd" transparent opacity={0.4} />
+              </mesh>
+            )}
+          </group>
+        );
+      })}
+    </group>
+  );
+}
+
 interface ThreeViewerProps {
   mode?: 'geometry' | 'mesh' | 'result';
-  scenarioType?: 'furnace' | 'converter' | 'default';
+  scenarioType?: 'furnace' | 'converter' | 'heater' | 'filter' | 'lance' | 'bottom' | 'default';
 }
 
 export function ThreeViewer({ mode = 'geometry', scenarioType = 'default' }: ThreeViewerProps) {
@@ -158,6 +309,10 @@ export function ThreeViewer({ mode = 'geometry', scenarioType = 'default' }: Thr
         <Center>
           {scenarioType === 'furnace' && <BlastFurnace mode={mode} />}
           {scenarioType === 'converter' && <Converter mode={mode} />}
+          {scenarioType === 'heater' && <HotStove mode={mode} />}
+          {scenarioType === 'filter' && <DustFilter mode={mode} />}
+          {scenarioType === 'lance' && <OxygenLance mode={mode} />}
+          {scenarioType === 'bottom' && <BottomBlowing mode={mode} />}
           {scenarioType === 'default' && <DefaultBox position={[0, 0, 0]} mode={mode} />}
         </Center>
 

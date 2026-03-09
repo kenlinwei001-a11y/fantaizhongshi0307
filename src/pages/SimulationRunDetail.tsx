@@ -44,7 +44,11 @@ import { ThreeViewer } from '../components/ThreeViewer';
 
 // Mock Data for Scenarios
 const getScenarios = (id: string | undefined) => {
-  if (id && id.startsWith('SIM-00') && parseInt(id.split('-')[1]) >= 5) {
+  const isConverter = id && (
+    (id.startsWith('SIM-00') && parseInt(id.split('-')[1]) >= 5) ||
+    (id === 'RES-002')
+  );
+  if (isConverter) {
     // Converter scenarios
     return [
       { id: 's1', name: '转炉本体 (BOF)', type: 'converter', status: 'running', progress: 65, icon: Flame },
@@ -61,7 +65,11 @@ const getScenarios = (id: string | undefined) => {
 };
 
 const getScenarioData = (id: string | undefined): Record<string, any> => {
-  if (id && id.startsWith('SIM-00') && parseInt(id.split('-')[1]) >= 5) {
+  const isConverter = id && (
+    (id.startsWith('SIM-00') && parseInt(id.split('-')[1]) >= 5) ||
+    (id === 'RES-002')
+  );
+  if (isConverter) {
     return {
       s1: { // BOF
         parameters: [
@@ -207,15 +215,32 @@ export function SimulationRunDetail() {
     'SIM-005': '转炉提钒_底吹氩气搅拌',
     'SIM-006': '转炉提钒_冷却剂加入策略',
     'SIM-007': '转炉提钒_钒渣氧化动力学',
+    'RES-001': '高炉本体温度场分析',
+    'RES-002': '转炉氧枪流场模拟',
+    'RES-003': '除尘系统压力场分析',
   };
   const caseName = id && caseNameMap[id] ? caseNameMap[id] : '高炉优化仿真_V1';
   
   const scenarios = getScenarios(id);
   const scenarioData = getScenarioData(id);
 
-  const [status, setStatus] = useState<'running' | 'completed' | 'failed' | 'paused'>('running');
-  const [progress, setProgress] = useState(45);
-  const [activeScenario, setActiveScenario] = useState('s1');
+  const [status, setStatus] = useState<'running' | 'completed' | 'failed' | 'paused' | 'waiting'>(() => {
+    if (['RES-001', 'RES-002', 'SIM-001', 'SIM-002', 'SIM-005'].includes(id || '')) return 'completed';
+    if (['RES-003', 'SIM-003'].includes(id || '')) return 'failed';
+    if (id === 'SIM-007') return 'waiting';
+    return 'running';
+  });
+  const [progress, setProgress] = useState(() => {
+    if (['RES-001', 'RES-002', 'SIM-001', 'SIM-002', 'SIM-005'].includes(id || '')) return 100;
+    if (['RES-003', 'SIM-003'].includes(id || '')) return 35;
+    if (id === 'SIM-007') return 0;
+    return 45;
+  });
+  const [activeScenario, setActiveScenario] = useState(() => {
+    if (id === 'RES-002') return 's2';
+    if (id === 'RES-003') return 's3';
+    return 's1';
+  });
   const [viewMode, setViewMode] = useState<'3d' | 'charts' | 'table'>('3d');
   const [chartData, setChartData] = useState(generateResiduals(50));
   const [logs, setLogs] = useState(mockLogs);
@@ -278,10 +303,12 @@ export function SimulationRunDetail() {
                 "flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-opacity-10 border",
                 status === 'running' ? "bg-emerald-500 border-emerald-500 text-emerald-400" : 
                 status === 'paused' ? "bg-yellow-500 border-yellow-500 text-yellow-400" :
+                status === 'waiting' ? "bg-yellow-500 border-yellow-500 text-yellow-400" :
+                status === 'failed' ? "bg-red-500 border-red-500 text-red-400" :
                 "bg-blue-500 border-blue-500 text-blue-400"
               )}>
-                <div className={cn("w-1.5 h-1.5 rounded-full", status === 'running' && "animate-pulse bg-emerald-400", status === 'paused' && "bg-yellow-400", status === 'completed' && "bg-blue-400")} />
-                {status === 'running' ? '运行中' : status === 'paused' ? '已暂停' : '已完成'}
+                <div className={cn("w-1.5 h-1.5 rounded-full", status === 'running' && "animate-pulse bg-emerald-400", (status === 'paused' || status === 'waiting') && "bg-yellow-400", status === 'failed' && "bg-red-400", status === 'completed' && "bg-blue-400")} />
+                {status === 'running' ? '运行中' : status === 'paused' ? '已暂停' : status === 'waiting' ? '等待中' : status === 'failed' ? '失败' : '已完成'}
               </span>
               <span className="text-zinc-500">|</span>
               <span className="text-zinc-400">AI 优化: 开启 (GA)</span>
@@ -426,7 +453,7 @@ export function SimulationRunDetail() {
                 </div>
                 <ThreeViewer 
                   mode="result" 
-                  scenarioType={['converter', 'lance', 'bottom'].includes(scenarios.find(s => s.id === activeScenario)?.type || '') ? 'converter' : 'furnace'} 
+                  scenarioType={scenarios.find(s => s.id === activeScenario)?.type as any || 'furnace'} 
                 />
               </div>
             )}

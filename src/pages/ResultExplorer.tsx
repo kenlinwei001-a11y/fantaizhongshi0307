@@ -20,6 +20,8 @@ import {
 } from 'recharts';
 import { cn } from '../lib/utils';
 
+import { useNavigate } from 'react-router-dom';
+
 const mockChartData = Array.from({ length: 20 }, (_, i) => ({
   time: `T+${i * 5}m`,
   temperature: 1200 + Math.random() * 100 - 50,
@@ -32,9 +34,14 @@ const mockResults = [
   { id: 'SIM-002', name: '高炉优化_参数A', status: 'completed', score: 94.2, duration: '48m', created: '2025-03-15 11:30' },
   { id: 'SIM-003', name: '高炉优化_参数B', status: 'failed', score: 0, duration: '12m', created: '2025-03-15 13:15' },
   { id: 'SIM-004', name: '高炉优化_参数C', status: 'running', score: 0, duration: '25m', created: '2025-03-15 14:00' },
+  { id: 'SIM-005', name: '转炉提钒_底吹氩气搅拌', status: 'completed', score: 88.5, duration: '35m', created: '2025-03-16 09:00' },
+  { id: 'SIM-006', name: '转炉提钒_冷却剂加入策略', status: 'running', score: 0, duration: '15m', created: '2025-03-16 10:30' },
+  { id: 'SIM-007', name: '转炉提钒_钒渣氧化动力学', status: 'waiting', score: 0, duration: '-', created: '2025-03-16 11:00' },
 ];
 
 export function ResultExplorer() {
+  const navigate = useNavigate();
+
   return (
     <div className="h-full flex flex-col bg-zinc-950 text-white">
       <div className="h-14 border-b border-white/10 flex items-center justify-between px-6 bg-zinc-900">
@@ -143,9 +150,10 @@ export function ResultExplorer() {
                       "px-2 py-0.5 rounded-full text-xs border",
                       res.status === 'completed' ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" :
                       res.status === 'running' ? "bg-blue-500/10 text-blue-400 border-blue-500/20" :
+                      res.status === 'waiting' ? "bg-yellow-500/10 text-yellow-400 border-yellow-500/20" :
                       "bg-red-500/10 text-red-400 border-red-500/20"
                     )}>
-                      {res.status === 'completed' ? '完成' : res.status === 'running' ? '运行中' : '失败'}
+                      {res.status === 'completed' ? '完成' : res.status === 'running' ? '运行中' : res.status === 'waiting' ? '等待中' : '失败'}
                     </span>
                   </td>
                   <td className="px-6 py-4 font-mono">
@@ -154,7 +162,10 @@ export function ResultExplorer() {
                   <td className="px-6 py-4 text-zinc-400">{res.duration}</td>
                   <td className="px-6 py-4 text-zinc-400">{res.created}</td>
                   <td className="px-6 py-4">
-                    <button className="text-purple-400 hover:text-purple-300 text-xs font-medium">
+                    <button 
+                      onClick={() => navigate(`/simulation/${res.id}/status`)}
+                      className="text-purple-400 hover:text-purple-300 text-xs font-medium"
+                    >
                       查看详情
                     </button>
                   </td>
