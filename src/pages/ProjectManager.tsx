@@ -160,7 +160,8 @@ export function ProjectManager() {
                 {cases[activeProject]?.map((simulationCase) => (
                   <div 
                     key={simulationCase.id}
-                    className="bg-zinc-900 border border-white/10 rounded-xl p-5 hover:border-emerald-500/50 transition-all group flex flex-col"
+                    onClick={() => navigate(`/simulation/${simulationCase.id}/status`)}
+                    className="bg-zinc-900 border border-white/10 rounded-xl p-5 hover:border-emerald-500/50 transition-all group flex flex-col cursor-pointer"
                   >
                     <div className="flex items-start justify-between mb-4">
                       <div className="p-3 bg-zinc-950 rounded-lg border border-white/5">
@@ -188,14 +189,14 @@ export function ProjectManager() {
                       </span>
                       <div className="flex items-center gap-3">
                         <button 
-                          onClick={() => navigate(`/simulation/${simulationCase.id}/status`)}
+                          onClick={(e) => { e.stopPropagation(); navigate(`/simulation/${simulationCase.id}/status`); }}
                           className="text-sm text-blue-500 hover:text-blue-400 flex items-center gap-1 font-medium"
                           title="查看运行状态"
                         >
                           <BarChart3 className="w-4 h-4" />
                         </button>
                         <button 
-                          onClick={() => navigate(`/simulation-studio/editor?caseId=${simulationCase.id}`)}
+                          onClick={(e) => { e.stopPropagation(); navigate(`/simulation-studio/editor?caseId=${simulationCase.id}`); }}
                           className="text-sm text-emerald-500 hover:text-emerald-400 flex items-center gap-1 font-medium"
                           title="打开编辑器"
                         >

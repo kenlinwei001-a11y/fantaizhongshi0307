@@ -43,55 +43,108 @@ import { cn } from '../lib/utils';
 import { ThreeViewer } from '../components/ThreeViewer';
 
 // Mock Data for Scenarios
-const scenarios = [
-  { id: 's1', name: '高炉本体 (Blast Furnace)', type: 'furnace', status: 'running', progress: 45, icon: Flame },
-  { id: 's2', name: '热风炉 (Hot Stove)', type: 'heater', status: 'waiting', progress: 0, icon: Wind },
-  { id: 's3', name: '除尘系统 (Dust Removal)', type: 'filter', status: 'waiting', progress: 0, icon: Layers },
-];
-
-const scenarioData: Record<string, {
-  parameters: { label: string; value: string }[];
-  indicators: { label: string; value: string; change: string; icon: any; color: string }[];
-}> = {
-  s1: { // Blast Furnace
-    parameters: [
-      { label: '物料', value: '铁矿石 (Hematite_01)' },
-      { label: '设备', value: '高炉 (BF_2500m³)' },
-      { label: '边界:入口温度', value: '1200 K' },
-      { label: '求解器', value: 'SimpleFoam' },
-    ],
-    indicators: [
-      { label: '炉腹温度', value: '1,450 K', change: '+1.2%', icon: Thermometer, color: 'text-red-500' },
-      { label: '风口压力', value: '320 kPa', change: '0.0%', icon: Wind, color: 'text-blue-500' },
-      { label: 'CO 浓度', value: '22.5 %', change: '+0.5%', icon: Droplets, color: 'text-purple-500' },
-    ]
-  },
-  s2: { // Hot Stove
-    parameters: [
-      { label: '燃料', value: '高炉煤气' },
-      { label: '设备', value: '热风炉 (HS_TypeA)' },
-      { label: '边界:拱顶温度', value: '1350 K' },
-      { label: '求解器', value: 'ReactingFoam' },
-    ],
-    indicators: [
-      { label: '拱顶温度', value: '1,380 K', change: '+0.5%', icon: Thermometer, color: 'text-red-500' },
-      { label: '废气温度', value: '350 K', change: '-1.2%', icon: Thermometer, color: 'text-orange-500' },
-      { label: '热效率', value: '82.5 %', change: '+0.8%', icon: Zap, color: 'text-emerald-500' },
-    ]
-  },
-  s3: { // Dust Removal
-    parameters: [
-      { label: '介质', value: '含尘烟气' },
-      { label: '设备', value: '布袋除尘器' },
-      { label: '边界:入口流速', value: '18 m/s' },
-      { label: '求解器', value: 'MPPICFoam' },
-    ],
-    indicators: [
-      { label: '入口压力', value: '150 kPa', change: '+2.1%', icon: Wind, color: 'text-blue-500' },
-      { label: '出口含尘', value: '15 mg/m³', change: '-5.0%', icon: Layers, color: 'text-zinc-400' },
-      { label: '压差', value: '1200 Pa', change: '+1.5%', icon: Activity, color: 'text-yellow-500' },
-    ]
+const getScenarios = (id: string | undefined) => {
+  if (id && id.startsWith('SIM-00') && parseInt(id.split('-')[1]) >= 5) {
+    // Converter scenarios
+    return [
+      { id: 's1', name: '转炉本体 (BOF)', type: 'converter', status: 'running', progress: 65, icon: Flame },
+      { id: 's2', name: '氧枪系统 (Oxygen Lance)', type: 'lance', status: 'running', progress: 65, icon: Wind },
+      { id: 's3', name: '底吹系统 (Bottom Blowing)', type: 'bottom', status: 'waiting', progress: 0, icon: Droplets },
+    ];
   }
+  // Default: Blast Furnace scenarios
+  return [
+    { id: 's1', name: '高炉本体 (Blast Furnace)', type: 'furnace', status: 'running', progress: 45, icon: Flame },
+    { id: 's2', name: '热风炉 (Hot Stove)', type: 'heater', status: 'waiting', progress: 0, icon: Wind },
+    { id: 's3', name: '除尘系统 (Dust Removal)', type: 'filter', status: 'waiting', progress: 0, icon: Layers },
+  ];
+};
+
+const getScenarioData = (id: string | undefined): Record<string, any> => {
+  if (id && id.startsWith('SIM-00') && parseInt(id.split('-')[1]) >= 5) {
+    return {
+      s1: { // BOF
+        parameters: [
+          { label: '物料', value: '含钒铁水' },
+          { label: '设备', value: '转炉 (120t)' },
+          { label: '边界:初始温度', value: '1600 K' },
+          { label: '求解器', value: 'ReactingMultiphaseFoam' },
+        ],
+        indicators: [
+          { label: '熔池温度', value: '1,650 K', change: '+2.5%', icon: Thermometer, color: 'text-red-500' },
+          { label: '碳含量', value: '3.2 %', change: '-0.8%', icon: Droplets, color: 'text-zinc-400' },
+          { label: '钒氧化率', value: '85.5 %', change: '+1.2%', icon: Activity, color: 'text-purple-500' },
+        ]
+      },
+      s2: { // Oxygen Lance
+        parameters: [
+          { label: '气体', value: '纯氧 (O2)' },
+          { label: '设备', value: '4孔拉瓦尔喷头' },
+          { label: '边界:供氧强度', value: '3.5 Nm³/(t·min)' },
+          { label: '求解器', value: 'SonicFoam' },
+        ],
+        indicators: [
+          { label: '氧气流量', value: '420 Nm³/min', change: '0.0%', icon: Wind, color: 'text-blue-500' },
+          { label: '马赫数', value: '2.1 Ma', change: '+0.1%', icon: Zap, color: 'text-yellow-500' },
+          { label: '射流穿透深度', value: '0.85 m', change: '+0.05m', icon: Layers, color: 'text-emerald-500' },
+        ]
+      },
+      s3: { // Bottom Blowing
+        parameters: [
+          { label: '气体', value: '氩气 (Ar)' },
+          { label: '设备', value: '透气砖 (8个)' },
+          { label: '边界:底吹流量', value: '0.05 Nm³/(t·min)' },
+          { label: '求解器', value: 'TwoPhaseEulerFoam' },
+        ],
+        indicators: [
+          { label: '氩气总流量', value: '6.0 Nm³/min', change: '0.0%', icon: Wind, color: 'text-blue-500' },
+          { label: '熔池搅拌能', value: '120 W/t', change: '+5.0%', icon: Activity, color: 'text-orange-500' },
+          { label: '气泡平均直径', value: '15 mm', change: '-1.2%', icon: Droplets, color: 'text-zinc-400' },
+        ]
+      }
+    };
+  }
+  return {
+    s1: { // Blast Furnace
+      parameters: [
+        { label: '物料', value: '钒钛磁铁矿 (V-Ti Magnetite)' },
+        { label: '设备', value: '高炉 (BF_2500m³)' },
+        { label: '边界:入口温度', value: '1200 K' },
+        { label: '求解器', value: 'SimpleFoam' },
+      ],
+      indicators: [
+        { label: '炉腹温度', value: '1,450 K', change: '+1.2%', icon: Thermometer, color: 'text-red-500' },
+        { label: '钛渣黏度', value: '1.5 Pa·s', change: '-0.2%', icon: Droplets, color: 'text-yellow-500' },
+        { label: 'CO 浓度', value: '22.5 %', change: '+0.5%', icon: Wind, color: 'text-purple-500' },
+      ]
+    },
+    s2: { // Hot Stove
+      parameters: [
+        { label: '燃料', value: '高炉煤气' },
+        { label: '设备', value: '热风炉 (HS_TypeA)' },
+        { label: '边界:拱顶温度', value: '1350 K' },
+        { label: '求解器', value: 'ReactingFoam' },
+      ],
+      indicators: [
+        { label: '拱顶温度', value: '1,380 K', change: '+0.5%', icon: Thermometer, color: 'text-red-500' },
+        { label: '废气温度', value: '350 K', change: '-1.2%', icon: Thermometer, color: 'text-orange-500' },
+        { label: '热效率', value: '82.5 %', change: '+0.8%', icon: Zap, color: 'text-emerald-500' },
+      ]
+    },
+    s3: { // Dust Removal
+      parameters: [
+        { label: '介质', value: '含尘烟气' },
+        { label: '设备', value: '布袋除尘器' },
+        { label: '边界:入口流速', value: '18 m/s' },
+        { label: '求解器', value: 'MPPICFoam' },
+      ],
+      indicators: [
+        { label: '入口压力', value: '150 kPa', change: '+2.1%', icon: Wind, color: 'text-blue-500' },
+        { label: '出口含尘', value: '15 mg/m³', change: '-5.0%', icon: Layers, color: 'text-zinc-400' },
+        { label: '压差', value: '1200 Pa', change: '+1.5%', icon: Activity, color: 'text-yellow-500' },
+      ]
+    }
+  };
 };
 
 // Mock Data for Charts
@@ -144,6 +197,22 @@ const mockLogs = [
 export function SimulationRunDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  
+  // Mock lookup for case name
+  const caseNameMap: Record<string, string> = {
+    'SIM-001': '高炉冶炼_常规配矿基准',
+    'SIM-002': '高炉冶炼_高钛渣黏度分析',
+    'SIM-003': '高炉冶炼_富氧喷吹优化',
+    'SIM-004': '高炉冶炼_炉缸侵蚀热力学',
+    'SIM-005': '转炉提钒_底吹氩气搅拌',
+    'SIM-006': '转炉提钒_冷却剂加入策略',
+    'SIM-007': '转炉提钒_钒渣氧化动力学',
+  };
+  const caseName = id && caseNameMap[id] ? caseNameMap[id] : '高炉优化仿真_V1';
+  
+  const scenarios = getScenarios(id);
+  const scenarioData = getScenarioData(id);
+
   const [status, setStatus] = useState<'running' | 'completed' | 'failed' | 'paused'>('running');
   const [progress, setProgress] = useState(45);
   const [activeScenario, setActiveScenario] = useState('s1');
@@ -201,7 +270,7 @@ export function SimulationRunDetail() {
           </button>
           <div>
             <h1 className="font-semibold text-lg flex items-center gap-2">
-              高炉优化仿真_V1
+              {caseName}
               <span className="text-zinc-500 font-normal text-sm">#{id}</span>
             </h1>
             <div className="flex items-center gap-3 text-xs">
@@ -347,7 +416,7 @@ export function SimulationRunDetail() {
               <div className="absolute inset-0">
                 <div className="absolute top-4 left-4 z-10 space-y-2">
                   <div className="bg-zinc-950/80 backdrop-blur px-3 py-2 rounded-lg border border-white/10 text-xs text-zinc-300">
-                    <div className="font-medium text-white mb-1">高炉本体 - 温度场</div>
+                    <div className="font-medium text-white mb-1">{scenarios.find(s => s.id === activeScenario)?.name || '高炉本体'} - 温度场</div>
                     <div className="flex items-center gap-2">
                       <span>Max: 2450 K</span>
                       <span className="w-px h-3 bg-white/20" />
@@ -355,7 +424,10 @@ export function SimulationRunDetail() {
                     </div>
                   </div>
                 </div>
-                <ThreeViewer mode="result" />
+                <ThreeViewer 
+                  mode="result" 
+                  scenarioType={['converter', 'lance', 'bottom'].includes(scenarios.find(s => s.id === activeScenario)?.type || '') ? 'converter' : 'furnace'} 
+                />
               </div>
             )}
             

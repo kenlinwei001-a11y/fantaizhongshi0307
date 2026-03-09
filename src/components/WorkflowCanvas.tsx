@@ -20,6 +20,7 @@ import { v4 as uuidv4 } from 'uuid';
 const nodeTypes = {
   data: CustomNode,
   ai: CustomNode,
+  agent: CustomNode,
   simulation: CustomNode,
   decision: CustomNode,
   control: CustomNode,
@@ -33,8 +34,8 @@ const initialNodes: Node[] = [
 ];
 
 const initialEdges: Edge[] = [
-  { id: 'e1-2', source: '1', target: '2', animated: true },
-  { id: 'e2-3', source: '2', target: '3', animated: true },
+  { id: 'e1-2', source: '1', target: '2', animated: true, style: { stroke: '#10b981', strokeWidth: 2 } },
+  { id: 'e2-3', source: '2', target: '3', animated: true, style: { stroke: '#10b981', strokeWidth: 2 } },
 ];
 
 export function WorkflowCanvas() {
@@ -44,7 +45,7 @@ export function WorkflowCanvas() {
   const { screenToFlowPosition } = useReactFlow();
 
   const onConnect = useCallback(
-    (params: Connection) => setEdges((eds) => addEdge(params, eds)),
+    (params: Connection) => setEdges((eds) => addEdge({ ...params, animated: true, style: { stroke: '#10b981', strokeWidth: 2 } }, eds)),
     [setEdges],
   );
 
@@ -93,6 +94,10 @@ export function WorkflowCanvas() {
         onDrop={onDrop}
         onDragOver={onDragOver}
         nodeTypes={nodeTypes}
+        defaultEdgeOptions={{
+          style: { stroke: '#10b981', strokeWidth: 2 },
+          animated: true,
+        }}
         fitView
         colorMode="dark"
       >

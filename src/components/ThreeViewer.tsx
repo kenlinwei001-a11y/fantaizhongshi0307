@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, Environment, Grid, Center, Text } from '@react-three/drei';
+import { OrbitControls, Environment, Grid, Center } from '@react-three/drei';
 import * as THREE from 'three';
 
 interface BoxProps {
@@ -8,7 +8,7 @@ interface BoxProps {
   mode: 'geometry' | 'mesh' | 'result';
 }
 
-function Box({ position, mode }: BoxProps) {
+function DefaultBox({ position, mode }: BoxProps) {
   const meshRef = useRef<THREE.Mesh>(null!);
   const [hovered, setHover] = useState(false);
   const [active, setActive] = useState(false);
@@ -49,11 +49,104 @@ function Box({ position, mode }: BoxProps) {
   );
 }
 
-interface ThreeViewerProps {
-  mode?: 'geometry' | 'mesh' | 'result';
+function BlastFurnace({ mode }: { mode: 'geometry' | 'mesh' | 'result' }) {
+  const groupRef = useRef<THREE.Group>(null!);
+  
+  useFrame((state, delta) => {
+    if (mode === 'result') {
+      groupRef.current.rotation.y += delta * 0.1;
+    }
+  });
+
+  const materialProps = {
+    color: mode === 'result' ? '#ef4444' : (mode === 'mesh' ? '#4ade80' : '#60a5fa'),
+    wireframe: mode === 'mesh',
+    transparent: mode === 'mesh' || mode === 'result',
+    opacity: mode === 'mesh' ? 0.5 : (mode === 'result' ? 0.8 : 1),
+  };
+
+  return (
+    <group ref={groupRef} position={[0, -1.5, 0]}>
+      {/* Hearth */}
+      <mesh position={[0, 0.5, 0]}>
+        <cylinderGeometry args={[1.2, 1.2, 1, 32]} />
+        <meshStandardMaterial {...materialProps} color={mode === 'result' ? '#b91c1c' : materialProps.color} />
+      </mesh>
+      {/* Bosh */}
+      <mesh position={[0, 1.5, 0]}>
+        <cylinderGeometry args={[1.5, 1.2, 1, 32]} />
+        <meshStandardMaterial {...materialProps} color={mode === 'result' ? '#ef4444' : materialProps.color} />
+      </mesh>
+      {/* Belly */}
+      <mesh position={[0, 2.25, 0]}>
+        <cylinderGeometry args={[1.5, 1.5, 0.5, 32]} />
+        <meshStandardMaterial {...materialProps} color={mode === 'result' ? '#f97316' : materialProps.color} />
+      </mesh>
+      {/* Stack */}
+      <mesh position={[0, 3.5, 0]}>
+        <cylinderGeometry args={[0.8, 1.5, 2, 32]} />
+        <meshStandardMaterial {...materialProps} color={mode === 'result' ? '#eab308' : materialProps.color} />
+      </mesh>
+      {/* Throat */}
+      <mesh position={[0, 4.75, 0]}>
+        <cylinderGeometry args={[0.8, 0.8, 0.5, 32]} />
+        <meshStandardMaterial {...materialProps} color={mode === 'result' ? '#3b82f6' : materialProps.color} />
+      </mesh>
+    </group>
+  );
 }
 
-export function ThreeViewer({ mode = 'geometry' }: ThreeViewerProps) {
+function Converter({ mode }: { mode: 'geometry' | 'mesh' | 'result' }) {
+  const groupRef = useRef<THREE.Group>(null!);
+  const lanceRef = useRef<THREE.Mesh>(null!);
+  
+  useFrame((state, delta) => {
+    if (mode === 'result') {
+      groupRef.current.rotation.y += delta * 0.1;
+      // Lance moving up and down slightly
+      lanceRef.current.position.y = 3.5 + Math.sin(state.clock.elapsedTime * 2) * 0.2;
+    }
+  });
+
+  const materialProps = {
+    color: mode === 'result' ? '#ef4444' : (mode === 'mesh' ? '#4ade80' : '#60a5fa'),
+    wireframe: mode === 'mesh',
+    transparent: mode === 'mesh' || mode === 'result',
+    opacity: mode === 'mesh' ? 0.5 : (mode === 'result' ? 0.8 : 1),
+  };
+
+  return (
+    <group ref={groupRef} position={[0, -1, 0]}>
+      {/* Bottom */}
+      <mesh position={[0, 0.5, 0]}>
+        <sphereGeometry args={[1.5, 32, 16, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2]} />
+        <meshStandardMaterial {...materialProps} color={mode === 'result' ? '#b91c1c' : materialProps.color} />
+      </mesh>
+      {/* Middle */}
+      <mesh position={[0, 1.5, 0]}>
+        <cylinderGeometry args={[1.5, 1.5, 2, 32]} />
+        <meshStandardMaterial {...materialProps} color={mode === 'result' ? '#ef4444' : materialProps.color} />
+      </mesh>
+      {/* Top Cone */}
+      <mesh position={[0, 3, 0]}>
+        <cylinderGeometry args={[0.8, 1.5, 1, 32]} />
+        <meshStandardMaterial {...materialProps} color={mode === 'result' ? '#f97316' : materialProps.color} />
+      </mesh>
+      {/* Oxygen Lance */}
+      <mesh ref={lanceRef} position={[0, 3.5, 0]}>
+        <cylinderGeometry args={[0.1, 0.1, 3, 16]} />
+        <meshStandardMaterial color="#94a3b8" metalness={0.8} roughness={0.2} />
+      </mesh>
+    </group>
+  );
+}
+
+interface ThreeViewerProps {
+  mode?: 'geometry' | 'mesh' | 'result';
+  scenarioType?: 'furnace' | 'converter' | 'default';
+}
+
+export function ThreeViewer({ mode = 'geometry', scenarioType = 'default' }: ThreeViewerProps) {
   return (
     <div className="h-full w-full bg-zinc-950 relative overflow-hidden rounded-lg border border-white/10">
       <Canvas camera={{ position: [4, 4, 4], fov: 45 }}>
@@ -63,7 +156,9 @@ export function ThreeViewer({ mode = 'geometry' }: ThreeViewerProps) {
         <pointLight position={[-10, -10, -10]} intensity={0.5} />
         
         <Center>
-          <Box position={[0, 0, 0]} mode={mode} />
+          {scenarioType === 'furnace' && <BlastFurnace mode={mode} />}
+          {scenarioType === 'converter' && <Converter mode={mode} />}
+          {scenarioType === 'default' && <DefaultBox position={[0, 0, 0]} mode={mode} />}
         </Center>
 
         <Grid 

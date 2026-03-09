@@ -56,6 +56,19 @@ const nodeCategories: NodeCategory[] = [
     ]
   },
   {
+    id: 'agent',
+    name: '智能体节点',
+    icon: <BrainCircuit className="w-4 h-4 text-indigo-400" />,
+    nodes: [
+      { id: 'agent_thermo', name: '热力学智能体', type: 'agent' },
+      { id: 'agent_kinetic', name: '动力学智能体', type: 'agent' },
+      { id: 'agent_batching', name: '配料智能体', type: 'agent' },
+      { id: 'agent_control', name: '控制智能体', type: 'agent' },
+      { id: 'agent_analysis', name: '数据分析智能体', type: 'agent' },
+      { id: 'agent_custom', name: '自定义智能体', type: 'agent' },
+    ]
+  },
+  {
     id: 'simulation',
     name: '仿真节点',
     icon: <Calculator className="w-4 h-4 text-emerald-400" />,

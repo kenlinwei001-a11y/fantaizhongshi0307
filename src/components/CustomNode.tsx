@@ -14,6 +14,7 @@ const NodeIcon = ({ type }: { type: string }) => {
   switch (type) {
     case 'data': return <Database className="w-4 h-4" />;
     case 'ai': return <BrainCircuit className="w-4 h-4" />;
+    case 'agent': return <BrainCircuit className="w-4 h-4" />;
     case 'simulation': return <Calculator className="w-4 h-4" />;
     case 'decision': return <GitBranch className="w-4 h-4" />;
     case 'control': return <Settings className="w-4 h-4" />;
@@ -26,6 +27,7 @@ const NodeColor = ({ type }: { type: string }) => {
   switch (type) {
     case 'data': return 'border-blue-500 bg-blue-500/10 text-blue-400';
     case 'ai': return 'border-purple-500 bg-purple-500/10 text-purple-400';
+    case 'agent': return 'border-indigo-500 bg-indigo-500/10 text-indigo-400';
     case 'simulation': return 'border-emerald-500 bg-emerald-500/10 text-emerald-400';
     case 'decision': return 'border-yellow-500 bg-yellow-500/10 text-yellow-400';
     case 'control': return 'border-zinc-500 bg-zinc-500/10 text-zinc-400';

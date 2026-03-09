@@ -31,9 +31,12 @@ interface Dataset {
 const mockDatasets: Dataset[] = [
   { id: '1', name: '2025_Q1_工艺历史数据.csv', type: 'csv', size: '45 MB', rows: 125000, updatedAt: '2025-03-15', tags: ['工艺', '历史', '原始数据'], owner: '系统管理员' },
   { id: '2', name: '设备传感器日志_高炉A.parquet', type: 'parquet', size: '1.2 GB', rows: 4500000, updatedAt: '2025-03-14', tags: ['IoT', '传感器', '高炉'], owner: '设备组' },
+  { id: '3', name: '转炉冶炼批次记录.csv', type: 'csv', size: '28 MB', rows: 85000, updatedAt: '2025-03-12', tags: ['转炉', '批次', '生产'], owner: '炼钢部' },
+  { id: '4', name: '连铸机结晶器温度场.json', type: 'json', size: '156 MB', rows: 320000, updatedAt: '2025-03-11', tags: ['连铸', '温度场', '热工'], owner: '连铸组' },
   { id: '5', name: '能源消耗基准表.csv', type: 'csv', size: '12 KB', rows: 150, updatedAt: '2025-02-28', tags: ['能源', '基准', '配置'], owner: '能源管理' },
   { id: '6', name: '铜冶炼热力学数据.json', type: 'json', size: '5 MB', rows: 2000, updatedAt: '2025-03-01', tags: ['热力学', '物性', '铜'], owner: '物理智能体' },
   { id: '7', name: '闪速炉几何模型_V4.stp', type: 'stp', size: '85 MB', rows: 342, updatedAt: '2025-03-10', tags: ['几何', 'CAD', '模型'], owner: '几何智能体' },
+  { id: '8', name: '钒钛磁铁矿成分分析.csv', type: 'csv', size: '8 MB', rows: 15000, updatedAt: '2025-03-05', tags: ['成分', '化验', '原料'], owner: '化验室' },
 ];
 
 const ontologyData = {
@@ -42,7 +45,7 @@ const ontologyData = {
   Equipment: ['高炉', '闪速炉', '电炉', '转炉', '钢包', '连铸机'],
   Physics: ['流体流动', '传热', '传质', '辐射', '相变'],
   Chemistry: ['反应', '平衡', '动力学', '催化'],
-  Product: ['铜', '镍', '铁', '钢'],
+  Product: ['铜', '镍', '铁', '钢', '钒渣', '钛白粉'],
 };
 
 const TypeIcon = ({ type }: { type: string }) => {
@@ -59,7 +62,7 @@ const TypeIcon = ({ type }: { type: string }) => {
 // Generate mock data based on dataset ID
 const generateMockData = (datasetId: string) => {
   const rows = [];
-  const numRows = 100; // Generate 100 rows for demonstration
+  const numRows = 500; // Generate 500 rows for demonstration
   
   const now = new Date();
   
@@ -85,6 +88,27 @@ const generateMockData = (datasetId: string) => {
         '炉顶压力(kPa)': (150 + Math.random() * 15).toFixed(1),
         '信号强度(dBm)': -(60 + Math.random() * 20).toFixed(0),
         '电池电量(%)': (80 + Math.random() * 20).toFixed(0)
+      });
+    } else if (datasetId === '3') {
+      rows.push({
+        '批次号': `HEAT-${now.getFullYear()}${String(now.getMonth()+1).padStart(2, '0')}-${String(i+1).padStart(4, '0')}`,
+        '开始时间': time,
+        '铁水重量(t)': (110 + Math.random() * 10).toFixed(1),
+        '废钢重量(t)': (15 + Math.random() * 5).toFixed(1),
+        '吹炼时间(min)': (16 + Math.random() * 4).toFixed(1),
+        '终点温度(°C)': (1650 + Math.random() * 30).toFixed(1),
+        '终点碳(%)': (0.05 + Math.random() * 0.03).toFixed(3),
+        '合格判定': Math.random() > 0.9 ? '降级' : '合格'
+      });
+    } else if (datasetId === '4') {
+      rows.push({
+        '时间戳': time,
+        '测点X(mm)': (Math.random() * 200).toFixed(1),
+        '测点Y(mm)': (Math.random() * 1000).toFixed(1),
+        '铜板温度(°C)': (150 + Math.random() * 80).toFixed(1),
+        '水缝流速(m/s)': (6.5 + Math.random() * 1.5).toFixed(2),
+        '热流密度(MW/m²)': (1.2 + Math.random() * 0.8).toFixed(3),
+        '结晶器液位(mm)': (80 + Math.random() * 10).toFixed(1)
       });
     } else if (datasetId === '5') {
       const shifts = ['早班', '中班', '晚班'];
@@ -121,6 +145,19 @@ const generateMockData = (datasetId: string) => {
         '网格数': Math.floor(Math.random() * 500000 + 10000),
         '材质': ['耐火砖', '碳砖', '铸铁', '铜', '钢'][i % 5],
         '几何状态': Math.random() > 0.9 ? '需修复' : '完好'
+      });
+    } else if (datasetId === '8') {
+      rows.push({
+        '样品编号': `SMP-VTI-${String(i + 1).padStart(5, '0')}`,
+        '采样时间': time,
+        'TFe(%)': (30 + Math.random() * 5).toFixed(2),
+        'V2O5(%)': (0.5 + Math.random() * 0.8).toFixed(3),
+        'TiO2(%)': (10 + Math.random() * 5).toFixed(2),
+        'S(%)': (0.1 + Math.random() * 0.2).toFixed(3),
+        'P(%)': (0.02 + Math.random() * 0.05).toFixed(3),
+        'SiO2(%)': (15 + Math.random() * 5).toFixed(2),
+        'Al2O3(%)': (8 + Math.random() * 4).toFixed(2),
+        '检验员': ['张工', '李工', '王工', '赵工'][i % 4]
       });
     }
   }
@@ -337,9 +374,11 @@ export function DataCatalog() {
                       onClick={() => setSelectedDataset(dataset)}
                       className="hover:bg-white/5 transition-colors group cursor-pointer"
                     >
-                      <td className="px-6 py-4 font-medium flex items-center gap-3">
-                        <TypeIcon type={dataset.type} />
-                        <span className="group-hover:text-blue-400 transition-colors">{dataset.name}</span>
+                      <td className="px-6 py-4 font-medium">
+                        <div className="flex items-center gap-3">
+                          <TypeIcon type={dataset.type} />
+                          <span className="group-hover:text-blue-400 transition-colors">{dataset.name}</span>
+                        </div>
                       </td>
                       <td className="px-6 py-4 text-zinc-400 uppercase">{dataset.type}</td>
                       <td className="px-6 py-4 text-zinc-400">{dataset.size}</td>

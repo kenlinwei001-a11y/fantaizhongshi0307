@@ -70,10 +70,10 @@ export function Dashboard() {
           <h2 className="text-lg font-semibold mb-4">最近仿真任务</h2>
           <div className="space-y-4">
             {[
-              { id: 'sim-001', name: '高炉优化_V3', status: 'running', progress: 45, time: '2分钟前' },
-              { id: 'sim-002', name: '闪速炉流场分析_Case01', status: 'completed', progress: 100, time: '1小时前' },
-              { id: 'sim-003', name: '转炉传热模拟_Test', status: 'completed', progress: 100, time: '3小时前' },
-              { id: 'sim-004', name: '喷嘴磨损预测_M12', status: 'failed', progress: 12, time: '5小时前' },
+              { id: 'SIM-001', name: '高炉冶炼_常规配矿基准', status: 'completed', progress: 100, time: '2分钟前' },
+              { id: 'SIM-004', name: '高炉冶炼_炉缸侵蚀热力学', status: 'running', progress: 45, time: '1小时前' },
+              { id: 'SIM-005', name: '转炉提钒_底吹氩气搅拌', status: 'completed', progress: 100, time: '3小时前' },
+              { id: 'SIM-006', name: '转炉提钒_冷却剂加入策略', status: 'running', progress: 12, time: '5小时前' },
             ].map((sim, i) => (
               <div 
                 key={i} 

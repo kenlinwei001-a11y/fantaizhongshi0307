@@ -20,7 +20,9 @@ import {
   FileCheck,
   Box,
   Zap,
-  Repeat
+  Repeat,
+  BrainCircuit,
+  GitBranch
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -33,6 +35,7 @@ interface SimulationConfig {
   department: string;
   simulation_type: string[];
   workflow_template: string;
+  agents: string[];
   materials: string[];
   equipment: { type: string; height: number; diameter: number };
   boundary_conditions: { temperature: number; pressure: number; flow_rate: number };
@@ -69,16 +72,17 @@ interface SimulationConfig {
 const steps = [
   { id: 0, key: 'basic', title: '基本信息', icon: FileText },
   { id: 1, key: 'type', title: '仿真类型', icon: Layers },
-  { id: 2, key: 'process', title: '工艺流程', icon: Box },
-  { id: 3, key: 'material', title: '物料配置', icon: Database },
-  { id: 4, key: 'equipment', title: '设备配置', icon: Settings },
-  { id: 5, key: 'boundary', title: '边界条件', icon: AlertCircle },
-  { id: 6, key: 'solver', title: '仿真参数', icon: Cpu },
-  { id: 7, key: 'optimization', title: '优化任务', icon: Zap },
-  { id: 8, key: 'iteration', title: '多轮迭代', icon: Repeat },
-  { id: 9, key: 'verification', title: '物理验证', icon: ClipboardCheck },
-  { id: 10, key: 'advanced', title: '高级设置', icon: Settings },
-  { id: 11, key: 'permission', title: '权限与版本', icon: Lock },
+  { id: 2, key: 'workflow', title: '工作流配置', icon: GitBranch },
+  { id: 3, key: 'agent', title: '智能体配置', icon: BrainCircuit },
+  { id: 4, key: 'material', title: '物料配置', icon: Database },
+  { id: 5, key: 'equipment', title: '设备配置', icon: Settings },
+  { id: 6, key: 'boundary', title: '边界条件', icon: AlertCircle },
+  { id: 7, key: 'solver', title: '仿真参数', icon: Cpu },
+  { id: 8, key: 'optimization', title: '优化任务', icon: Zap },
+  { id: 9, key: 'iteration', title: '多轮迭代', icon: Repeat },
+  { id: 10, key: 'verification', title: '物理验证', icon: ClipboardCheck },
+  { id: 11, key: 'advanced', title: '高级设置', icon: Settings },
+  { id: 12, key: 'permission', title: '权限与版本', icon: Lock },
 ];
 
 const mockMaterials = [
@@ -86,6 +90,13 @@ const mockMaterials = [
   { id: 'mat_02', name: '焦炭 (Coke)', density: 1.90, specific_heat: 1.20 },
   { id: 'mat_03', name: '石灰石 (Limestone)', density: 2.71, specific_heat: 0.91 },
   { id: 'mat_04', name: '铜精矿 (Copper Concentrate)', density: 4.20, specific_heat: 0.55 },
+];
+
+const mockAgents = [
+  { id: 'agent_01', name: '热力学平衡智能体', type: '分析', description: '用于计算复杂多相体系的平衡组成' },
+  { id: 'agent_02', name: '高炉配料优化智能体', type: '优化', description: '基于成本和质量目标优化炉料结构' },
+  { id: 'agent_03', name: '流场异常检测智能体', type: '监控', description: '实时分析流场数据并预警异常状态' },
+  { id: 'agent_04', name: '转炉终点预测智能体', type: '预测', description: '预测转炉吹炼终点温度和碳含量' },
 ];
 
 const mockEquipmentTemplates = [
@@ -105,6 +116,7 @@ export function CreateSimulationCase() {
     department: '冶金部',
     simulation_type: ['FVM'],
     workflow_template: '',
+    agents: [],
     materials: [],
     equipment: { type: '', height: 0, diameter: 0 },
     boundary_conditions: { temperature: 1200, pressure: 101.3, flow_rate: 50 },
@@ -155,7 +167,7 @@ export function CreateSimulationCase() {
         return { ...prev, [section]: value };
       }
       // Handle arrays
-      if (section === 'simulation_type' || section === 'materials') {
+      if (section === 'simulation_type' || section === 'materials' || section === 'agents') {
          // Logic handled in specific handlers usually, but for generic:
          return { ...prev, [section]: value };
       }
@@ -186,8 +198,8 @@ export function CreateSimulationCase() {
   };
 
   const renderStepContent = () => {
-    switch (currentStep) {
-      case 0: // Basic Info
+    switch (steps[currentStep].key) {
+      case 'basic': // Basic Info
         return (
           <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
             <div className="grid grid-cols-2 gap-6">
@@ -243,7 +255,7 @@ export function CreateSimulationCase() {
             </div>
           </div>
         );
-      case 1: // Simulation Type
+      case 'type': // Simulation Type
         return (
           <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -283,7 +295,7 @@ export function CreateSimulationCase() {
             </div>
           </div>
         );
-      case 2: // Process Flow
+      case 'workflow': // Process Flow
         return (
           <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -318,7 +330,53 @@ export function CreateSimulationCase() {
             )}
           </div>
         );
-      case 3: // Material
+      case 'agent': // Agent Configuration
+        return (
+          <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-medium">选择参与仿真的智能体</h3>
+              <button className="text-sm text-emerald-500 hover:text-emerald-400 flex items-center gap-1">
+                <BrainCircuit className="w-4 h-4" />
+                从智能体工作室导入
+              </button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {mockAgents.map((agent) => {
+                const isSelected = formData.agents.includes(agent.id);
+                return (
+                  <div 
+                    key={agent.id}
+                    onClick={() => {
+                      const newAgents = isSelected 
+                        ? formData.agents.filter(a => a !== agent.id)
+                        : [...formData.agents, agent.id];
+                      handleInputChange('agents', '', newAgents);
+                    }}
+                    className={cn(
+                      "p-4 rounded-xl border cursor-pointer transition-all hover:bg-white/5 flex flex-col h-full",
+                      isSelected ? "bg-emerald-500/10 border-emerald-500" : "bg-zinc-900 border-white/10"
+                    )}
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className={cn("p-2 rounded-lg", isSelected ? "bg-emerald-500/20 text-emerald-400" : "bg-zinc-800 text-zinc-400")}>
+                          <BrainCircuit className="w-4 h-4" />
+                        </div>
+                        <span className={cn("font-medium", isSelected ? "text-emerald-400" : "text-white")}>{agent.name}</span>
+                      </div>
+                      {isSelected && <CheckCircle2 className="w-5 h-5 text-emerald-500" />}
+                    </div>
+                    <div className="text-xs text-zinc-500 mb-2 flex-1">{agent.description}</div>
+                    <div className="inline-flex items-center px-2 py-1 rounded-md bg-zinc-800/50 text-xs text-zinc-400 border border-white/5 self-start">
+                      {agent.type}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      case 'material': // Material
         return (
           <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
             <div className="flex items-center justify-between">
@@ -358,7 +416,7 @@ export function CreateSimulationCase() {
             </div>
           </div>
         );
-      case 4: // Equipment
+      case 'equipment': // Equipment
         return (
           <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
             <div className="space-y-4">
@@ -412,7 +470,7 @@ export function CreateSimulationCase() {
             </div>
           </div>
         );
-      case 5: // Boundary
+      case 'boundary': // Boundary
         return (
           <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -447,7 +505,7 @@ export function CreateSimulationCase() {
             </div>
           </div>
         );
-      case 6: // Solver
+      case 'solver': // Solver
         return (
           <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -481,7 +539,7 @@ export function CreateSimulationCase() {
             </div>
           </div>
         );
-      case 7: // Optimization
+      case 'optimization': // Optimization
         return (
           <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
             <div className="space-y-4">
@@ -589,7 +647,7 @@ export function CreateSimulationCase() {
             </div>
           </div>
         );
-      case 8: // Iteration
+      case 'iteration': // Iteration
         return (
           <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
             <div className="bg-zinc-900 border border-white/10 rounded-xl p-6 text-center">
@@ -652,7 +710,7 @@ export function CreateSimulationCase() {
             </div>
           </div>
         );
-      case 9: // Verification
+      case 'verification': // Verification
         return (
           <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
             <div className="flex items-center justify-between mb-4">
@@ -743,7 +801,7 @@ export function CreateSimulationCase() {
             </div>
           </div>
         );
-      case 10: // Advanced
+      case 'advanced': // Advanced
         return (
           <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -773,7 +831,7 @@ export function CreateSimulationCase() {
             </div>
           </div>
         );
-      case 11: // Permission
+      case 'permission': // Permission
         return (
           <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
             <div className="space-y-2">

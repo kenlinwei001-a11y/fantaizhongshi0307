@@ -19,7 +19,7 @@ import { motion } from 'framer-motion';
 import { ThreeViewer } from '../components/ThreeViewer';
 
 // Placeholder components for each step
-const GeometryEditor = () => (
+const GeometryEditor = ({ scenarioType = 'default' }: { scenarioType?: 'furnace' | 'converter' | 'default' }) => (
   <div className="p-6 h-full flex flex-col">
     <h2 className="text-xl font-semibold text-white mb-4">几何建模</h2>
     <div className="grid grid-cols-3 gap-6 flex-1 min-h-0">
@@ -35,13 +35,13 @@ const GeometryEditor = () => (
         </div>
       </div>
       <div className="col-span-2 bg-zinc-900 border border-white/10 rounded-xl overflow-hidden relative">
-        <ThreeViewer mode="geometry" />
+        <ThreeViewer mode="geometry" scenarioType={scenarioType} />
       </div>
     </div>
   </div>
 );
 
-const MeshStudio = () => (
+const MeshStudio = ({ scenarioType = 'default' }: { scenarioType?: 'furnace' | 'converter' | 'default' }) => (
   <div className="p-6 h-full flex flex-col">
     <h2 className="text-xl font-semibold text-white mb-4">网格划分</h2>
     <div className="grid grid-cols-3 gap-6 flex-1 min-h-0">
@@ -75,7 +75,7 @@ const MeshStudio = () => (
         </div>
       </div>
       <div className="col-span-2 bg-zinc-900 border border-white/10 rounded-xl overflow-hidden relative">
-        <ThreeViewer mode="mesh" />
+        <ThreeViewer mode="mesh" scenarioType={scenarioType} />
       </div>
     </div>
   </div>
@@ -422,6 +422,7 @@ export default function SimulationStudio() {
   }, [caseId]);
 
   const ActiveComponent = steps.find(s => s.id === activeStep)?.component || GeometryEditor;
+  const scenarioType = caseId && caseId.startsWith('SIM-00') && parseInt(caseId.split('-')[1]) >= 5 ? 'converter' : 'furnace';
 
   const handleSave = () => {
     console.log('Saving project...');
@@ -507,7 +508,7 @@ export default function SimulationStudio() {
             {activeStep === 'run' ? (
               <SimulationRun caseId={caseId} />
             ) : (
-              <ActiveComponent />
+              <ActiveComponent scenarioType={scenarioType} />
             )}
           </motion.div>
         </div>

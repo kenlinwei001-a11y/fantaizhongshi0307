@@ -27,7 +27,7 @@ function WorkflowDesignerContent() {
   useEffect(() => {
     async function init() {
       try {
-        const newProject = await createProject('演示项目', '由 AI 创建');
+        const newProject = await createProject('攀西钒钛磁铁矿高炉冶炼', '由 AI 创建');
         setProject(newProject);
         const simulation = await createSimulation(newProject.id, '运行 001', 'OpenFOAM');
         setSimulationId(simulation.id);
@@ -154,7 +154,7 @@ function WorkflowDesignerContent() {
               <WorkflowCanvas />
             ) : (
               <div className="absolute inset-0">
-                <ThreeViewer />
+                <ThreeViewer scenarioType="furnace" />
               </div>
             )}
           </div>

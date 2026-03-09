@@ -27,7 +27,7 @@ interface Agent {
   status: 'active' | 'idle' | 'working' | 'offline';
   tasks: number;
   efficiency: number;
-  icon: React.ReactNode;
+  icon: React.ReactElement;
   description: string;
   capabilities: string[];
 }
@@ -159,7 +159,7 @@ export function AgentStudio() {
           {/* Header */}
           <div className="flex items-center gap-4 mb-8">
             <div className="w-16 h-16 rounded-xl bg-zinc-900 border border-white/10 flex items-center justify-center">
-              {React.cloneElement(selectedAgent.icon as React.ReactElement, { className: "w-8 h-8" })}
+              {React.cloneElement(selectedAgent.icon as React.ReactElement<any>, { className: "w-8 h-8" })}
             </div>
             <div className="flex-1">
               <h2 className="text-2xl font-bold text-white">{selectedAgent.name}</h2>
