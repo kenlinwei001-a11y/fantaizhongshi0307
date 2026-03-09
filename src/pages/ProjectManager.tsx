@@ -7,9 +7,11 @@ import {
   MoreVertical, 
   Calendar,
   User,
-  ArrowRight
+  ArrowRight,
+  BarChart3
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { cn } from '../lib/utils';
 
 interface Project {
   id: string;
@@ -24,73 +26,57 @@ interface SimulationCase {
   project_id: string;
   name: string;
   furnace_type: string;
+  status: 'completed' | 'failed' | 'running' | 'waiting';
   created_at: string;
 }
 
+const mockProjects: Project[] = [
+  { id: 'PROJ-001', name: '攀西钒钛磁铁矿高炉冶炼', description: '高炉火法冶炼优化及钛渣行为模拟', owner_id: 'admin', created_at: '2025-03-15T10:00:00Z' },
+  { id: 'PROJ-002', name: '含钒铁水转炉提钒', description: '转炉提钒热力学与动力学模拟', owner_id: 'user1', created_at: '2025-03-14T15:30:00Z' }
+];
+
+const mockCases: Record<string, SimulationCase[]> = {
+  'PROJ-001': [
+    { id: 'SIM-001', project_id: 'PROJ-001', name: '高炉冶炼_常规配矿基准', furnace_type: '高炉 (Blast Furnace)', status: 'completed', created_at: '2025-03-15T10:00:00Z' },
+    { id: 'SIM-002', project_id: 'PROJ-001', name: '高炉冶炼_高钛渣黏度分析', furnace_type: '高炉 (Blast Furnace)', status: 'completed', created_at: '2025-03-15T11:30:00Z' },
+    { id: 'SIM-003', project_id: 'PROJ-001', name: '高炉冶炼_富氧喷吹优化', furnace_type: '高炉 (Blast Furnace)', status: 'failed', created_at: '2025-03-15T13:15:00Z' },
+    { id: 'SIM-004', project_id: 'PROJ-001', name: '高炉冶炼_炉缸侵蚀热力学', furnace_type: '高炉 (Blast Furnace)', status: 'running', created_at: '2025-03-15T14:00:00Z' },
+  ],
+  'PROJ-002': [
+    { id: 'SIM-005', project_id: 'PROJ-002', name: '转炉提钒_底吹氩气搅拌', furnace_type: '转炉 (BOF)', status: 'completed', created_at: '2025-03-16T09:00:00Z' },
+    { id: 'SIM-006', project_id: 'PROJ-002', name: '转炉提钒_冷却剂加入策略', furnace_type: '转炉 (BOF)', status: 'running', created_at: '2025-03-16T10:30:00Z' },
+    { id: 'SIM-007', project_id: 'PROJ-002', name: '转炉提钒_钒渣氧化动力学', furnace_type: '转炉 (BOF)', status: 'waiting', created_at: '2025-03-16T11:00:00Z' }
+  ]
+};
+
 export function ProjectManager() {
   const navigate = useNavigate();
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [cases, setCases] = useState<Record<string, SimulationCase[]>>({});
-  const [loading, setLoading] = useState(true);
-  const [activeProject, setActiveProject] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchProjects();
-  }, []);
-
-  const fetchProjects = async () => {
-    try {
-      const res = await fetch('/api/projects');
-      const data = await res.json();
-      setProjects(data);
-      if (data.length > 0) {
-        setActiveProject(data[0].id);
-        fetchCases(data[0].id);
-      }
-      setLoading(false);
-    } catch (error) {
-      console.error('Failed to fetch projects', error);
-      setLoading(false);
-    }
-  };
-
-  const fetchCases = async (projectId: string) => {
-    try {
-      const res = await fetch(`/api/projects/${projectId}/cases`);
-      const data = await res.json();
-      setCases(prev => ({ ...prev, [projectId]: data }));
-    } catch (error) {
-      console.error('Failed to fetch cases', error);
-    }
-  };
+  const [projects, setProjects] = useState<Project[]>(mockProjects);
+  const [cases, setCases] = useState<Record<string, SimulationCase[]>>(mockCases);
+  const [activeProject, setActiveProject] = useState<string | null>(mockProjects[0].id);
 
   const handleProjectClick = (projectId: string) => {
     setActiveProject(projectId);
-    if (!cases[projectId]) {
-      fetchCases(projectId);
-    }
   };
 
-  const handleCreateProject = async () => {
+  const handleCreateProject = () => {
     const name = prompt('请输入项目名称:');
     if (!name) return;
     
-    try {
-      const res = await fetch('/api/projects', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, description: '新项目', owner_id: 'current_user' })
-      });
-      const newProject = await res.json();
-      setProjects([newProject, ...projects]);
-      setActiveProject(newProject.id);
-      setCases(prev => ({ ...prev, [newProject.id]: [] }));
-    } catch (error) {
-      console.error('Failed to create project', error);
-    }
+    const newProject: Project = {
+      id: `PROJ-${Math.floor(Math.random() * 1000)}`,
+      name,
+      description: '新项目',
+      owner_id: 'current_user',
+      created_at: new Date().toISOString()
+    };
+    
+    setProjects([newProject, ...projects]);
+    setActiveProject(newProject.id);
+    setCases(prev => ({ ...prev, [newProject.id]: [] }));
   };
 
-  const handleCreateCase = async (projectId: string) => {
+  const handleCreateCase = (projectId: string) => {
     navigate('/simulation-studio/create');
   };
 
@@ -174,30 +160,48 @@ export function ProjectManager() {
                 {cases[activeProject]?.map((simulationCase) => (
                   <div 
                     key={simulationCase.id}
-                    className="bg-zinc-900 border border-white/10 rounded-xl p-5 hover:border-emerald-500/50 transition-all group"
+                    className="bg-zinc-900 border border-white/10 rounded-xl p-5 hover:border-emerald-500/50 transition-all group flex flex-col"
                   >
                     <div className="flex items-start justify-between mb-4">
                       <div className="p-3 bg-zinc-950 rounded-lg border border-white/5">
                         <FileCode className="w-6 h-6 text-emerald-500" />
                       </div>
-                      <button className="text-zinc-500 hover:text-white">
-                        <MoreVertical className="w-5 h-5" />
-                      </button>
+                      <div className={cn(
+                        "px-2 py-1 rounded-full text-xs font-medium border",
+                        simulationCase.status === 'completed' ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" :
+                        simulationCase.status === 'running' ? "bg-blue-500/10 text-blue-400 border-blue-500/20" :
+                        simulationCase.status === 'failed' ? "bg-red-500/10 text-red-400 border-red-500/20" :
+                        "bg-zinc-500/10 text-zinc-400 border-zinc-500/20"
+                      )}>
+                        {simulationCase.status === 'completed' ? '完成' : 
+                         simulationCase.status === 'running' ? '运行中' : 
+                         simulationCase.status === 'failed' ? '失败' : '等待中'}
+                      </div>
                     </div>
                     
                     <h4 className="text-lg font-medium text-white mb-1">{simulationCase.name}</h4>
-                    <p className="text-sm text-zinc-500 mb-4">{simulationCase.furnace_type}</p>
+                    <p className="text-sm text-zinc-500 mb-4 flex-1">{simulationCase.furnace_type}</p>
                     
                     <div className="flex items-center justify-between pt-4 border-t border-white/5">
                       <span className="text-xs text-zinc-600">
                         {new Date(simulationCase.created_at).toLocaleDateString()}
                       </span>
-                      <button 
-                        onClick={() => navigate(`/simulation-studio?caseId=${simulationCase.id}`)}
-                        className="text-sm text-emerald-500 hover:text-emerald-400 flex items-center gap-1 font-medium"
-                      >
-                        打开编辑器 <ArrowRight className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center gap-3">
+                        <button 
+                          onClick={() => navigate(`/simulation/${simulationCase.id}/status`)}
+                          className="text-sm text-blue-500 hover:text-blue-400 flex items-center gap-1 font-medium"
+                          title="查看运行状态"
+                        >
+                          <BarChart3 className="w-4 h-4" />
+                        </button>
+                        <button 
+                          onClick={() => navigate(`/simulation-studio/editor?caseId=${simulationCase.id}`)}
+                          className="text-sm text-emerald-500 hover:text-emerald-400 flex items-center gap-1 font-medium"
+                          title="打开编辑器"
+                        >
+                          <ArrowRight className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}

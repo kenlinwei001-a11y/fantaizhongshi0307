@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   Database, 
   Search, 
@@ -10,7 +10,9 @@ import {
   Table as TableIcon,
   Network,
   Box,
-  ArrowRight
+  ArrowRight,
+  ArrowLeft,
+  Download
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { motion } from 'framer-motion';
@@ -18,7 +20,7 @@ import { motion } from 'framer-motion';
 interface Dataset {
   id: string;
   name: string;
-  type: 'csv' | 'json' | 'sql' | 'parquet';
+  type: 'csv' | 'json' | 'sql' | 'parquet' | 'stp';
   size: string;
   rows: number;
   updatedAt: string;
@@ -31,7 +33,7 @@ const mockDatasets: Dataset[] = [
   { id: '2', name: '设备传感器日志_高炉A.parquet', type: 'parquet', size: '1.2 GB', rows: 4500000, updatedAt: '2025-03-14', tags: ['IoT', '传感器', '高炉'], owner: '设备组' },
   { id: '5', name: '能源消耗基准表.csv', type: 'csv', size: '12 KB', rows: 150, updatedAt: '2025-02-28', tags: ['能源', '基准', '配置'], owner: '能源管理' },
   { id: '6', name: '铜冶炼热力学数据.json', type: 'json', size: '5 MB', rows: 2000, updatedAt: '2025-03-01', tags: ['热力学', '物性', '铜'], owner: '物理智能体' },
-  { id: '7', name: '闪速炉几何模型_V4.stp', type: 'sql', size: '85 MB', rows: 0, updatedAt: '2025-03-10', tags: ['几何', 'CAD', '模型'], owner: '几何智能体' },
+  { id: '7', name: '闪速炉几何模型_V4.stp', type: 'stp', size: '85 MB', rows: 342, updatedAt: '2025-03-10', tags: ['几何', 'CAD', '模型'], owner: '几何智能体' },
 ];
 
 const ontologyData = {
@@ -49,14 +51,87 @@ const TypeIcon = ({ type }: { type: string }) => {
     case 'json': return <FileJson className="w-5 h-5 text-yellow-500" />;
     case 'sql': return <Database className="w-5 h-5 text-blue-500" />;
     case 'parquet': return <TableIcon className="w-5 h-5 text-purple-500" />;
+    case 'stp': return <Box className="w-5 h-5 text-orange-500" />;
     default: return <Database className="w-5 h-5 text-zinc-500" />;
   }
+};
+
+// Generate mock data based on dataset ID
+const generateMockData = (datasetId: string) => {
+  const rows = [];
+  const numRows = 100; // Generate 100 rows for demonstration
+  
+  const now = new Date();
+  
+  for (let i = 0; i < numRows; i++) {
+    const time = new Date(now.getTime() - i * 5 * 60000).toISOString().replace('T', ' ').substring(0, 19);
+    
+    if (datasetId === '1') {
+      rows.push({
+        '时间': time,
+        '温度(°C)': (1200 + Math.random() * 50).toFixed(2),
+        '压力(kPa)': (350 + Math.random() * 20).toFixed(2),
+        '流量(m³/h)': (15000 + Math.random() * 1000).toFixed(0),
+        'O2浓度(%)': (21.5 + Math.random() * 2).toFixed(2),
+        'CO浓度(%)': (15.2 + Math.random() * 3).toFixed(2),
+        '状态': Math.random() > 0.95 ? '异常' : '正常'
+      });
+    } else if (datasetId === '2') {
+      rows.push({
+        '时间戳': time,
+        '传感器ID': `SENS-BF-A-${String(Math.floor(Math.random() * 20) + 1).padStart(3, '0')}`,
+        '振动频率(Hz)': (45 + Math.random() * 10).toFixed(2),
+        '冷却水温(°C)': (35 + Math.random() * 5).toFixed(1),
+        '炉顶压力(kPa)': (150 + Math.random() * 15).toFixed(1),
+        '信号强度(dBm)': -(60 + Math.random() * 20).toFixed(0),
+        '电池电量(%)': (80 + Math.random() * 20).toFixed(0)
+      });
+    } else if (datasetId === '5') {
+      const shifts = ['早班', '中班', '晚班'];
+      const equipments = ['1#高炉', '2#高炉', '1#烧结机', '2#烧结机', '1#转炉'];
+      rows.push({
+        '日期': new Date(now.getTime() - i * 24 * 3600000).toISOString().split('T')[0],
+        '设备名称': equipments[i % equipments.length],
+        '班次': shifts[i % 3],
+        '电耗(kWh/t)': (45 + Math.random() * 10).toFixed(2),
+        '水耗(t/t)': (0.8 + Math.random() * 0.3).toFixed(2),
+        '煤气消耗(m³/t)': (120 + Math.random() * 30).toFixed(1),
+        '综合能耗(kgce/t)': (150 + Math.random() * 20).toFixed(1),
+        '达标状态': Math.random() > 0.8 ? '超标' : '达标'
+      });
+    } else if (datasetId === '6') {
+      const substances = ['Cu', 'Cu2O', 'CuO', 'Fe', 'FeO', 'Fe2O3', 'Fe3O4', 'SiO2', 'S2', 'SO2'];
+      const states = ['s', 'l', 'g'];
+      rows.push({
+        '物质': substances[i % substances.length],
+        '状态': states[i % states.length],
+        '温度(K)': (298.15 + i * 50).toFixed(2),
+        '焓(kJ/mol)': (Math.random() * 500 - 250).toFixed(2),
+        '熵(J/mol·K)': (Math.random() * 200 + 20).toFixed(2),
+        '热容(J/mol·K)': (Math.random() * 100 + 10).toFixed(2),
+        '吉布斯自由能(kJ/mol)': (Math.random() * -800).toFixed(2)
+      });
+    } else if (datasetId === '7') {
+      const parts = ['炉缸', '炉腹', '炉腰', '炉身', '炉喉', '风口', '铁口', '渣口', '冷却壁'];
+      rows.push({
+        '部件ID': `PART-${String(i + 1).padStart(4, '0')}`,
+        '名称': `${parts[i % parts.length]}_${Math.floor(i/parts.length) + 1}`,
+        '体积(m³)': (Math.random() * 50 + 1).toFixed(3),
+        '表面积(m²)': (Math.random() * 200 + 5).toFixed(2),
+        '网格数': Math.floor(Math.random() * 500000 + 10000),
+        '材质': ['耐火砖', '碳砖', '铸铁', '铜', '钢'][i % 5],
+        '几何状态': Math.random() > 0.9 ? '需修复' : '完好'
+      });
+    }
+  }
+  return rows;
 };
 
 export function DataCatalog() {
   const [activeTab, setActiveTab] = useState<'catalog' | 'ontology'>('catalog');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [selectedDataset, setSelectedDataset] = useState<Dataset | null>(null);
 
   const allTags = Array.from(new Set(mockDatasets.flatMap(d => d.tags)));
 
@@ -71,6 +146,106 @@ export function DataCatalog() {
       prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
     );
   };
+
+  const detailData = useMemo(() => {
+    if (!selectedDataset) return [];
+    return generateMockData(selectedDataset.id);
+  }, [selectedDataset]);
+
+  if (selectedDataset) {
+    const columns = detailData.length > 0 ? Object.keys(detailData[0]) : [];
+
+    return (
+      <div className="h-full flex flex-col bg-zinc-950 text-white animate-in fade-in duration-300">
+        <div className="h-16 border-b border-white/10 flex items-center justify-between px-6 bg-zinc-900 shrink-0">
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => setSelectedDataset(null)}
+              className="p-1.5 hover:bg-white/10 rounded-full transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5 text-zinc-400" />
+            </button>
+            <div className="flex items-center gap-3">
+              <TypeIcon type={selectedDataset.type} />
+              <div>
+                <h1 className="font-semibold text-lg">{selectedDataset.name}</h1>
+                <div className="flex items-center gap-3 text-xs text-zinc-500">
+                  <span>{selectedDataset.size}</span>
+                  <span>•</span>
+                  <span>{selectedDataset.rows.toLocaleString()} 行</span>
+                  <span>•</span>
+                  <span>更新于 {selectedDataset.updatedAt}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button className="bg-zinc-800 hover:bg-zinc-700 text-white px-3 py-1.5 rounded-md text-sm font-medium transition-colors border border-white/10">
+              数据清洗
+            </button>
+            <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-2">
+              <Download className="w-4 h-4" />
+              导出数据
+            </button>
+          </div>
+        </div>
+
+        <div className="flex-1 p-6 overflow-hidden flex flex-col">
+          <div className="flex items-center gap-2 mb-4">
+            {selectedDataset.tags.map(tag => (
+              <span key={tag} className="px-2 py-1 bg-white/5 border border-white/10 rounded-md text-xs text-zinc-300">
+                {tag}
+              </span>
+            ))}
+            <span className="text-xs text-zinc-500 ml-2">所有者: {selectedDataset.owner}</span>
+          </div>
+
+          <div className="flex-1 bg-zinc-900 border border-white/10 rounded-xl overflow-hidden flex flex-col">
+            <div className="p-3 border-b border-white/10 bg-zinc-900/50 flex items-center justify-between">
+              <span className="text-sm font-medium text-zinc-300">数据预览 (前 100 行)</span>
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-zinc-500" />
+                <input 
+                  type="text" 
+                  placeholder="在结果中搜索..." 
+                  className="bg-zinc-950 border border-white/10 rounded pl-8 pr-3 py-1 text-xs text-white focus:ring-1 focus:ring-blue-500 outline-none w-64"
+                />
+              </div>
+            </div>
+            <div className="flex-1 overflow-auto">
+              <table className="w-full text-left text-sm whitespace-nowrap">
+                <thead className="bg-zinc-950/50 text-zinc-400 font-medium sticky top-0 z-10 shadow-sm">
+                  <tr>
+                    <th className="px-4 py-3 border-b border-white/10 bg-zinc-950 w-12 text-center">#</th>
+                    {columns.map(col => (
+                      <th key={col} className="px-4 py-3 border-b border-white/10 bg-zinc-950">
+                        {col}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {detailData.map((row, i) => (
+                    <tr key={i} className="hover:bg-white/5 transition-colors">
+                      <td className="px-4 py-2 text-zinc-600 text-center text-xs">{i + 1}</td>
+                      {columns.map(col => (
+                        <td key={col} className={cn(
+                          "px-4 py-2",
+                          row[col] === '异常' || row[col] === '超标' || row[col] === '需修复' ? "text-red-400" : "text-zinc-300"
+                        )}>
+                          {row[col]}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-full flex flex-col bg-zinc-950 text-white">
@@ -157,10 +332,14 @@ export function DataCatalog() {
                 </thead>
                 <tbody className="divide-y divide-white/5">
                   {filteredDatasets.map((dataset) => (
-                    <tr key={dataset.id} className="hover:bg-white/5 transition-colors group">
+                    <tr 
+                      key={dataset.id} 
+                      onClick={() => setSelectedDataset(dataset)}
+                      className="hover:bg-white/5 transition-colors group cursor-pointer"
+                    >
                       <td className="px-6 py-4 font-medium flex items-center gap-3">
                         <TypeIcon type={dataset.type} />
-                        {dataset.name}
+                        <span className="group-hover:text-blue-400 transition-colors">{dataset.name}</span>
                       </td>
                       <td className="px-6 py-4 text-zinc-400 uppercase">{dataset.type}</td>
                       <td className="px-6 py-4 text-zinc-400">{dataset.size}</td>
@@ -177,7 +356,13 @@ export function DataCatalog() {
                       </td>
                       <td className="px-6 py-4 text-zinc-400">{dataset.owner}</td>
                       <td className="px-6 py-4">
-                        <button className="p-1 hover:bg-white/10 rounded text-zinc-500 hover:text-white transition-colors">
+                        <button 
+                          className="p-1 hover:bg-white/10 rounded text-zinc-500 hover:text-white transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            // Handle more options
+                          }}
+                        >
                           <MoreHorizontal className="w-4 h-4" />
                         </button>
                       </td>

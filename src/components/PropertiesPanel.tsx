@@ -1,13 +1,8 @@
 import React from 'react';
-import { Settings2 } from 'lucide-react';
 
 export function PropertiesPanel() {
   return (
-    <div className="h-full bg-zinc-900 border-l border-white/10 flex flex-col w-72">
-      <div className="p-3 border-b border-white/10 font-medium text-zinc-400 text-xs uppercase tracking-wider flex items-center gap-2">
-        <Settings2 className="w-3 h-3" />
-        属性配置
-      </div>
+    <div className="h-full bg-zinc-900 flex flex-col w-full">
       <div className="p-4 space-y-6 overflow-y-auto flex-1">
         {/* Mock Properties for a Physics Node */}
         <div>

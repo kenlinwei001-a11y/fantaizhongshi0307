@@ -40,7 +40,7 @@ export function ResultExplorer() {
       <div className="h-14 border-b border-white/10 flex items-center justify-between px-6 bg-zinc-900">
         <div className="flex items-center gap-2">
           <BarChart3 className="w-5 h-5 text-purple-500" />
-          <h1 className="font-semibold text-lg">结果探索</h1>
+          <h1 className="font-semibold text-lg">仿真项目</h1>
         </div>
         <div className="flex items-center gap-2">
           <button className="bg-zinc-800 hover:bg-zinc-700 text-white px-3 py-1.5 rounded-md text-sm font-medium transition-colors flex items-center gap-2 border border-white/10">

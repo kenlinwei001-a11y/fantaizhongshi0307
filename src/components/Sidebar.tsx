@@ -18,10 +18,10 @@ const navItems = [
   { icon: LayoutDashboard, label: '仪表盘', path: '/' },
   { icon: Database, label: '数据目录', path: '/data' },
   { icon: GitFork, label: '工作流设计', path: '/workflow' },
-  { icon: Bot, label: '智能体工作室', path: '/agents' },
-  { icon: Box, label: '仿真模型', path: '/simulation' },
-  { icon: FlaskConical, label: '仿真工作室', path: '/simulation-studio' },
-  { icon: BarChart3, label: '结果探索', path: '/results' },
+  { icon: Bot, label: '智能体', path: '/agents' },
+  // { icon: Box, label: '仿真模型', path: '/simulation' },
+  { icon: FlaskConical, label: '仿真数值模拟', path: '/simulation-studio' },
+  { icon: BarChart3, label: '仿真项目', path: '/results' },
   { icon: BrainCircuit, label: '决策中心', path: '/decision' },
   { icon: Settings, label: '系统管理', path: '/admin' },
 ];
@@ -34,7 +34,7 @@ export function Sidebar() {
           <BrainCircuit className="w-5 h-5 text-white" />
         </div>
         <span className="ml-3 font-bold text-white hidden md:block truncate">
-          AI 仿真操作系统
+          钒钛磁铁矿火法数值模拟平台
         </span>
       </div>
 

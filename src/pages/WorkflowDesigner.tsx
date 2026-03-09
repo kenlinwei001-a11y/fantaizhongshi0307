@@ -7,17 +7,19 @@ import { CopilotPanel } from '../components/CopilotPanel';
 import { BottomPanel } from '../components/BottomPanel';
 import { WorkflowCanvas } from '../components/WorkflowCanvas';
 import { ThreeViewer } from '../components/ThreeViewer';
-import { Layers, Box } from 'lucide-react';
+import { Layers, Box, Library, Settings2 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { createProject, createSimulation, runSimulation, getSimulationStatus } from '../lib/api';
 import { Project } from '../types';
 
 function WorkflowDesignerContent() {
   const [activeTab, setActiveTab] = useState<'workflow' | '3d'>('workflow');
+  const [leftPanelTab, setLeftPanelTab] = useState<'library' | 'properties'>('library');
   const [logs, setLogs] = useState<string[]>([]);
   const [project, setProject] = useState<Project | null>(null);
   const [simulationId, setSimulationId] = useState<string | null>(null);
   const [isRunning, setIsRunning] = useState(false);
+  const [isCopilotOpen, setIsCopilotOpen] = useState(false);
   
   const { getNodes, getEdges } = useReactFlow();
 
@@ -78,11 +80,47 @@ function WorkflowDesignerContent() {
 
   return (
     <div className="h-full flex flex-col bg-zinc-950 text-white overflow-hidden">
-      <TopBar projectName={project?.name} onRun={handleRun} onSave={handleSave} />
+      <TopBar 
+        projectName={project?.name} 
+        onRun={handleRun} 
+        onSave={handleSave} 
+        isCopilotOpen={isCopilotOpen}
+        onToggleCopilot={() => setIsCopilotOpen(!isCopilotOpen)}
+      />
       
       <div className="flex-1 flex overflow-hidden">
-        {/* Left: Node Library (Replaces Project Panel) */}
-        <NodeLibraryPanel />
+        {/* Left Panel: Library & Properties Tabs */}
+        <div className="w-72 flex flex-col bg-zinc-900 border-r border-white/10">
+          <div className="flex border-b border-white/10">
+            <button
+              onClick={() => setLeftPanelTab('library')}
+              className={cn(
+                "flex-1 py-3 text-xs font-medium flex items-center justify-center gap-2 transition-colors border-b-2",
+                leftPanelTab === 'library' ? "border-emerald-500 text-emerald-400 bg-white/5" : "border-transparent text-zinc-400 hover:text-white hover:bg-white/5"
+              )}
+            >
+              <Library className="w-4 h-4" />
+              组件库
+            </button>
+            <button
+              onClick={() => setLeftPanelTab('properties')}
+              className={cn(
+                "flex-1 py-3 text-xs font-medium flex items-center justify-center gap-2 transition-colors border-b-2",
+                leftPanelTab === 'properties' ? "border-emerald-500 text-emerald-400 bg-white/5" : "border-transparent text-zinc-400 hover:text-white hover:bg-white/5"
+              )}
+            >
+              <Settings2 className="w-4 h-4" />
+              属性配置
+            </button>
+          </div>
+          <div className="flex-1 overflow-hidden">
+            {leftPanelTab === 'library' ? (
+              <NodeLibraryPanel />
+            ) : (
+              <PropertiesPanel />
+            )}
+          </div>
+        </div>
 
         {/* Center: Canvas / 3D Viewer */}
         <div className="flex-1 flex flex-col min-w-0 relative">
@@ -125,11 +163,12 @@ function WorkflowDesignerContent() {
           <BottomPanel logs={logs} />
         </div>
 
-        {/* Right: Copilot & Properties */}
-        <div className="flex h-full border-l border-white/10">
-          <CopilotPanel />
-          <PropertiesPanel />
-        </div>
+        {/* Right: Copilot */}
+        {isCopilotOpen && (
+          <div className="flex h-full border-l border-white/10">
+            <CopilotPanel />
+          </div>
+        )}
       </div>
     </div>
   );

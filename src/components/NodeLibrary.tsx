@@ -127,7 +127,7 @@ export function NodeLibraryPanel() {
   };
 
   return (
-    <div className="h-full bg-zinc-900 border-r border-white/10 flex flex-col w-64">
+    <div className="h-full bg-zinc-900 flex flex-col w-full">
       <div className="p-3 border-b border-white/10">
         <div className="font-medium text-zinc-400 text-xs uppercase tracking-wider mb-2">
           节点库

@@ -438,10 +438,10 @@ export default function SimulationStudio() {
           </div>
           <div>
             <h1 className="text-lg font-semibold text-white">
-              {caseData ? caseData.name : '仿真工作室'}
+              {caseData ? caseData.name : '仿真数值模拟'}
             </h1>
             <p className="text-xs text-zinc-500">
-              {caseData ? `算例 ID: ${caseData.id}` : '仿真工作室'}
+              {caseData ? `算例 ID: ${caseData.id}` : '仿真数值模拟'}
             </p>
           </div>
         </div>

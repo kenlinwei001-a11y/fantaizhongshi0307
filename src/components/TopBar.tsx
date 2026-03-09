@@ -1,5 +1,5 @@
 import React from 'react';
-import { Save, Play, Square, Download, GitCompare, Settings, Menu } from 'lucide-react';
+import { Save, Play, Square, Download, GitCompare, Settings, Menu, Sparkles } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 interface TopBarProps {
@@ -10,6 +10,8 @@ interface TopBarProps {
   onExport?: () => void;
   onCompare?: () => void;
   onSettings?: () => void;
+  isCopilotOpen?: boolean;
+  onToggleCopilot?: () => void;
 }
 
 export function TopBar({
@@ -20,6 +22,8 @@ export function TopBar({
   onExport,
   onCompare,
   onSettings,
+  isCopilotOpen,
+  onToggleCopilot,
 }: TopBarProps) {
   return (
     <div className="h-14 border-b border-white/10 bg-zinc-900 flex items-center px-4 justify-between">
@@ -43,6 +47,17 @@ export function TopBar({
         <button onClick={onStop} className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-400 hover:bg-red-400/10 rounded-md transition-colors">
           <Square className="w-4 h-4" />
           停止
+        </button>
+        <div className="h-6 w-px bg-white/10 mx-2" />
+        <button 
+          onClick={onToggleCopilot} 
+          className={cn(
+            "flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-colors",
+            isCopilotOpen ? "bg-purple-500/20 text-purple-400" : "text-zinc-400 hover:text-white hover:bg-zinc-800"
+          )}
+        >
+          <Sparkles className="w-4 h-4" />
+          AI 助手
         </button>
         <div className="h-6 w-px bg-white/10 mx-2" />
         <button onClick={onExport} className="p-2 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-md transition-colors" title="导出">

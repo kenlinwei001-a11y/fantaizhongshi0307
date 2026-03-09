@@ -18,7 +18,9 @@ import {
   Lock,
   ClipboardCheck,
   FileCheck,
-  Box
+  Box,
+  Zap,
+  Repeat
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 
@@ -35,6 +37,22 @@ interface SimulationConfig {
   equipment: { type: string; height: number; diameter: number };
   boundary_conditions: { temperature: number; pressure: number; flow_rate: number };
   solver_parameters: { mesh_size: number; time_step: number; tolerance: number };
+  optimization_task: {
+    input_variables: { name: string; min: number; max: number; step: number }[];
+    objective_functions: { type: 'single' | 'multi'; metrics: string[]; weights: number[] }[];
+    algorithm: { type: string; parameters: { iterations: number; population: number; convergence_threshold: number } };
+  };
+  iteration_results: {
+    iteration_id: number;
+    input_values: any;
+    objective_values: any;
+    status: 'completed' | 'running';
+  }[];
+  optimization_result: {
+    best_input_values: any;
+    best_objective_values: any;
+    pareto_front: any[];
+  };
   physical_verification: {
     verification_id: string;
     type: string;
@@ -45,7 +63,7 @@ interface SimulationConfig {
   advanced_settings: { parallel_nodes: number; output_frequency: number };
   permissions: { read: string[]; write: string[] };
   version: string;
-  status: 'saved' | 'running' | 'completed' | 'verified';
+  status: 'saved' | 'running' | 'completed' | 'verified' | 'optimized';
 }
 
 const steps = [
@@ -56,9 +74,11 @@ const steps = [
   { id: 4, key: 'equipment', title: '设备配置', icon: Settings },
   { id: 5, key: 'boundary', title: '边界条件', icon: AlertCircle },
   { id: 6, key: 'solver', title: '仿真参数', icon: Cpu },
-  { id: 7, key: 'verification', title: '物理验证', icon: ClipboardCheck },
-  { id: 8, key: 'advanced', title: '高级设置', icon: Settings },
-  { id: 9, key: 'permission', title: '权限与版本', icon: Lock },
+  { id: 7, key: 'optimization', title: '优化任务', icon: Zap },
+  { id: 8, key: 'iteration', title: '多轮迭代', icon: Repeat },
+  { id: 9, key: 'verification', title: '物理验证', icon: ClipboardCheck },
+  { id: 10, key: 'advanced', title: '高级设置', icon: Settings },
+  { id: 11, key: 'permission', title: '权限与版本', icon: Lock },
 ];
 
 const mockMaterials = [
@@ -89,6 +109,21 @@ export function CreateSimulationCase() {
     equipment: { type: '', height: 0, diameter: 0 },
     boundary_conditions: { temperature: 1200, pressure: 101.3, flow_rate: 50 },
     solver_parameters: { mesh_size: 0.01, time_step: 0.001, tolerance: 1e-6 },
+    optimization_task: {
+      input_variables: [
+        { name: '入口风温', min: 1000, max: 1300, step: 10 },
+        { name: '富氧率', min: 21, max: 30, step: 1 }
+      ],
+      objective_functions: [
+        { type: 'single', metrics: ['产量'], weights: [1.0] }
+      ],
+      algorithm: { 
+        type: 'GA', 
+        parameters: { iterations: 50, population: 20, convergence_threshold: 0.001 } 
+      }
+    },
+    iteration_results: [],
+    optimization_result: { best_input_values: {}, best_objective_values: {}, pareto_front: [] },
     physical_verification: [],
     advanced_settings: { parallel_nodes: 4, output_frequency: 100 },
     permissions: { read: ['public'], write: ['owner'] },
@@ -146,8 +181,8 @@ export function CreateSimulationCase() {
       alert('请先修复验证错误');
       return;
     }
-    alert('仿真任务已提交至调度队列！');
-    navigate('/simulation-studio');
+    // alert('仿真任务已提交至调度队列！');
+    navigate(`/simulation/${formData.project_id}/status`);
   };
 
   const renderStepContent = () => {
@@ -446,7 +481,178 @@ export function CreateSimulationCase() {
             </div>
           </div>
         );
-      case 7: // Verification
+      case 7: // Optimization
+        return (
+          <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-medium">输入变量设置</h3>
+                <button className="text-sm text-emerald-500 hover:text-emerald-400 flex items-center gap-1">
+                  + 添加变量
+                </button>
+              </div>
+              <div className="bg-zinc-900 border border-white/10 rounded-xl overflow-hidden">
+                <table className="w-full text-sm text-left">
+                  <thead className="bg-zinc-800/50 text-zinc-400">
+                    <tr>
+                      <th className="px-4 py-3 font-medium">变量名称</th>
+                      <th className="px-4 py-3 font-medium">最小值</th>
+                      <th className="px-4 py-3 font-medium">最大值</th>
+                      <th className="px-4 py-3 font-medium">步长</th>
+                      <th className="px-4 py-3 font-medium text-right">操作</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-white/5">
+                    {formData.optimization_task.input_variables.map((variable, idx) => (
+                      <tr key={idx} className="hover:bg-white/5 transition-colors">
+                        <td className="px-4 py-3 text-white">{variable.name}</td>
+                        <td className="px-4 py-3 font-mono text-zinc-300">{variable.min}</td>
+                        <td className="px-4 py-3 font-mono text-zinc-300">{variable.max}</td>
+                        <td className="px-4 py-3 font-mono text-zinc-300">{variable.step}</td>
+                        <td className="px-4 py-3 text-right">
+                          <button className="text-zinc-500 hover:text-red-400 transition-colors">删除</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">目标函数</h3>
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-zinc-400">优化目标</label>
+                    <select className="w-full bg-zinc-900 border border-white/10 rounded-lg px-4 py-2 focus:ring-2 focus:ring-emerald-500 outline-none">
+                      <option value="single">单目标优化</option>
+                      <option value="multi">多目标优化 (Pareto)</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-zinc-400">关注指标</label>
+                    <div className="flex flex-wrap gap-2">
+                      {['产量', '质量', '能耗', '排放'].map((metric) => (
+                        <button
+                          key={metric}
+                          className={cn(
+                            "px-3 py-1.5 rounded-lg text-sm border transition-colors",
+                            formData.optimization_task.objective_functions[0].metrics.includes(metric)
+                              ? "bg-emerald-500/10 border-emerald-500 text-emerald-400"
+                              : "bg-zinc-900 border-white/10 text-zinc-400 hover:bg-white/5"
+                          )}
+                        >
+                          {metric}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">算法配置</h3>
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium text-zinc-400">优化算法</label>
+                    <select 
+                      value={formData.optimization_task.algorithm.type}
+                      onChange={(e) => handleInputChange('optimization_task', 'algorithm', { ...formData.optimization_task.algorithm, type: e.target.value })}
+                      className="w-full bg-zinc-900 border border-white/10 rounded-lg px-4 py-2 focus:ring-2 focus:ring-emerald-500 outline-none"
+                    >
+                      <option value="GA">遗传算法 (Genetic Algorithm)</option>
+                      <option value="Bayesian">贝叶斯优化 (Bayesian Optimization)</option>
+                      <option value="RL">强化学习 (Reinforcement Learning)</option>
+                    </select>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-xs text-zinc-500">迭代次数</label>
+                      <input 
+                        type="number" 
+                        value={formData.optimization_task.algorithm.parameters.iterations}
+                        className="w-full bg-zinc-900 border border-white/10 rounded px-3 py-1.5 text-sm"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs text-zinc-500">种群规模</label>
+                      <input 
+                        type="number" 
+                        value={formData.optimization_task.algorithm.parameters.population}
+                        className="w-full bg-zinc-900 border border-white/10 rounded px-3 py-1.5 text-sm"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      case 8: // Iteration
+        return (
+          <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+            <div className="bg-zinc-900 border border-white/10 rounded-xl p-6 text-center">
+              <div className="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Repeat className="w-8 h-8 text-emerald-500" />
+              </div>
+              <h3 className="text-lg font-medium text-white mb-2">多轮迭代策略配置</h3>
+              <p className="text-zinc-400 text-sm max-w-md mx-auto mb-6">
+                系统将根据优化算法自动生成参数组合，并提交多轮仿真任务。请配置迭代执行策略。
+              </p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-left max-w-2xl mx-auto">
+                <div className="p-4 bg-zinc-800/50 rounded-lg border border-white/5">
+                  <div className="text-zinc-500 text-xs mb-1">并行策略</div>
+                  <div className="font-medium text-white">异步并行 (Async)</div>
+                </div>
+                <div className="p-4 bg-zinc-800/50 rounded-lg border border-white/5">
+                  <div className="text-zinc-500 text-xs mb-1">最大并发数</div>
+                  <div className="font-medium text-white">4 任务</div>
+                </div>
+                <div className="p-4 bg-zinc-800/50 rounded-lg border border-white/5">
+                  <div className="text-zinc-500 text-xs mb-1">失败处理</div>
+                  <div className="font-medium text-white">自动重试 (3次)</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="border border-white/10 rounded-xl overflow-hidden">
+              <div className="bg-zinc-800/50 px-4 py-3 border-b border-white/10 font-medium text-sm text-zinc-300">
+                预估迭代计划
+              </div>
+              <div className="p-4 space-y-4">
+                <div className="flex items-center gap-4 text-sm">
+                  <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-500 border border-white/10">1</div>
+                  <div className="flex-1">
+                    <div className="text-white">初始种群生成</div>
+                    <div className="text-zinc-500 text-xs">生成 20 组初始参数组合</div>
+                  </div>
+                  <div className="text-zinc-500">预计耗时: 2h</div>
+                </div>
+                <div className="w-0.5 h-4 bg-zinc-800 ml-4"></div>
+                <div className="flex items-center gap-4 text-sm">
+                  <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-500 border border-white/10">2</div>
+                  <div className="flex-1">
+                    <div className="text-white">并行仿真计算</div>
+                    <div className="text-zinc-500 text-xs">调用求解器进行数值模拟</div>
+                  </div>
+                  <div className="text-zinc-500">动态调度</div>
+                </div>
+                <div className="w-0.5 h-4 bg-zinc-800 ml-4"></div>
+                <div className="flex items-center gap-4 text-sm">
+                  <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-500 border border-white/10">3</div>
+                  <div className="flex-1">
+                    <div className="text-white">收敛性判断 & 进化</div>
+                    <div className="text-zinc-500 text-xs">根据目标函数值生成下一代参数</div>
+                  </div>
+                  <div className="text-zinc-500">自动循环</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      case 9: // Verification
         return (
           <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
             <div className="flex items-center justify-between mb-4">
@@ -537,7 +743,7 @@ export function CreateSimulationCase() {
             </div>
           </div>
         );
-      case 8: // Advanced
+      case 10: // Advanced
         return (
           <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -567,7 +773,7 @@ export function CreateSimulationCase() {
             </div>
           </div>
         );
-      case 9: // Permission
+      case 11: // Permission
         return (
           <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
             <div className="space-y-2">
@@ -724,7 +930,7 @@ export function CreateSimulationCase() {
             </div>
 
             {/* Verification Preview */}
-            {currentStep === 7 && formData.physical_verification.length > 0 && (
+            {currentStep === 9 && formData.physical_verification.length > 0 && (
               <div>
                 <h3 className="text-sm font-medium text-zinc-300 mb-3 flex items-center gap-2">
                   <ClipboardCheck className="w-4 h-4 text-emerald-500" />
